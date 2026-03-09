@@ -1,0 +1,108 @@
+# Experiment configuration for module comparison
+
+models:
+  # Local MLX model - for testing text+json output format
+  gemma-4b-local:
+    model: "mlx-community/gemma-3-4b-it-qat-4bit"
+    provider: "mlx"
+    capabilities: ["local", "fast", "tools"]
+    priority: 20
+    enabled: true
+
+  gemma-12b-local:
+    model: "mlx-community/gemma-3-12b-it-qat-4bit"
+    provider: "mlx"
+    capabilities: ["local", "fast", "tools"]
+    priority: 20
+    enabled: true
+
+  # GoogleGenAI Gemini - alternative for testing
+  otolab-gemini-2.5-flash-lite:
+    model: "gemini-2.5-flash-lite"
+    provider: "googlegenai"
+    capabilities: ["tools", "fast", "japanese"]
+    priority: 15
+    enabled: false  # Disabled by default
+
+  otolab-gemma-3-27b:
+    model: "gemma-3-27b"
+    provider: "googlegenai"
+    capabilities: ["tools", "fast", "japanese"]
+    priority: 15
+    enabled: false  # Disabled by default
+
+drivers:
+  mlx: {}
+  vertexai:
+    project: "plaid-devenv-ai"
+    location: "us-central1"
+    # Path is resolved relative to this config file
+    # Can use ~/ for home directory or absolute paths
+    credentialsPath: "~/.config/gcloud/application_default_credentials.json"
+    # ~/.sprite-claude/otolab-vertexai-key.json
+  googlegenai:
+    apiKey: "${GOOGLE_API_KEY}"  # Set via environment variable
+
+# Evaluation configuration
+# Specifies which model to use for AI-based evaluation
+evaluation:
+  enabled: true
+  model: "plaidev-gemini-2.5-flash-lite"  # Reference by model name
+
+# Modules to test
+# Each module should have: name, path (relative to this file), description (optional)
+modules:
+  - name: "original"
+    path: "../modules/original-module.ts"
+    description: "Original toolGenerationModule"
+  - name: "merged"
+    path: "../modules/merged-module.ts"
+    description: "Merged (toolGenerationLogicModule + textJsonOutputModule)"
+
+# Test cases
+# Each test case should have: name, input (context object), optional: description, models (array of model names)
+testCases:
+  - name: "Simple completion notification"
+    description: "User asks to be notified when work is completed"
+    analysisResult:
+      userIntent: "ユーザーは作業完了時に音声通知を受け取りたい"
+      keyFacts:
+        - "現在のオペレータ: dia"
+        - "作業: ファイルの整理作業"
+        - "通知内容: 作業完了の報告"
+      reasoning: "ユーザーが通知を要求しているため、sayツールで音声通知を行う"
+    relevantContext:
+      - role: "user"
+        content: "大量のファイルを整理しています。終わったら教えてください。"
+      - role: "assistant"
+        content: "わかりました。ファイル整理を開始します。"
+    toolDefinition:
+      name: "mcp__plugin_coeiro-operator_coeiro-operator__say"
+      description: "日本語音声を非同期で出力します"
+      input_schema:
+        type: "object"
+        properties:
+          speechText:
+            description: "Text to speak (Japanese)"
+            type: "string"
+          characterId:
+            description: "Character ID (defaults to current operator if omitted)"
+            type: "string"
+          styleName:
+            description: "Style name (e.g., \"のーまる\", defaults to character's default style if omitted)"
+            type: "string"
+          factor:
+            description: "Relative speed multiplier (1.0 = normal speed, defaults to character's natural speed if omitted)"
+            type: "number"
+          rate:
+            description: "Absolute speed in WPM (200 = standard, defaults to config value if omitted)"
+            type: "number"
+        required: ["speechText"]
+
+# Evaluators
+# Built-in evaluators (name only) or custom evaluators (with path)
+evaluators:
+  # Built-in: Checks if structuredOutput exists and is valid
+  - name: "structured-output-presence"
+  # Built-in: LLM-based comprehensive quality evaluation
+  - name: "llm-requirement-fulfillment"

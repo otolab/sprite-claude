@@ -1,0 +1,67 @@
+# sprite-claude 設定ファイル例
+# このファイルを ~/.sprite-claude/config.yaml にコピーして使用してください
+
+# ========================================
+# 基本設定（単一MLXモデル）
+# ========================================
+# シンプルな設定。ローカルMLXモデルのみを使用します。
+
+mlx:
+  model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+
+server:
+  port: 4000
+  host: "0.0.0.0"
+
+logging:
+  level: "info"  # debug, info, warn, error
+  request_response_level: "full"  # none, minimal, full
+
+runtime:
+  pid_dir: "~/.sprite-claude/run"
+  log_dir: "~/.sprite-claude/logs"
+
+# ========================================
+# 複数モデル設定（MLX + Vertex AI Gemini）
+# ========================================
+# 複数のモデルを登録し、リクエストに応じて最適なモデルを動的に選択します。
+# 以下の設定を有効にする場合は、上記の mlx セクションをコメントアウトしてください。
+
+# models:
+#   # ローカルMLXモデル
+#   - model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+#     provider: "mlx"
+#     capabilities: ["local", "fast"]
+#     priority: 10
+#     enabled: true
+#
+#   # Vertex AI Gemini
+#   - model: "gemini-2.0-flash-001"
+#     provider: "vertexai"
+#     capabilities: ["fast", "japanese", "reasoning"]
+#     priority: 20
+#     enabled: true
+
+# drivers:
+#   mlx: {}
+#   vertexai:
+#     project: "your-gcp-project-id"  # GCPプロジェクトIDを設定
+#     location: "us-central1"          # リージョンを設定
+
+# selection:
+#   preferLocal: true   # ローカルモデルを優先
+#   preferFast: true    # 高速なモデルを優先
+#   lenient: true       # 条件を満たすモデルがない場合は緩和
+#   requiredCapabilities: []  # 常に必要な能力（例: ["tools"]）
+
+# server:
+#   port: 4000
+#   host: "0.0.0.0"
+
+# logging:
+#   level: "info"
+#   request_response_level: "full"
+
+# runtime:
+#   pid_dir: "~/.sprite-claude/run"
+#   log_dir: "~/.sprite-claude/logs"

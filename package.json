@@ -1,0 +1,26 @@
+{
+  "name": "sprite-claude",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm run -r build",
+    "build:force": "pnpm run -r build:force",
+    "clean": "pnpm run -r clean",
+    "dev": "pnpm --filter @modular-prompt/anthropic-server dev",
+    "test": "pnpm run -r test",
+    "lint": "pnpm run -r lint",
+    "typecheck": "pnpm run -r typecheck"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@modular-prompt/driver"
+    ]
+  }
+}

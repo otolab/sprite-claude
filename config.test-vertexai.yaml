@@ -1,0 +1,47 @@
+# テスト用設定: Vertex AI Gemini（otolab-161708プロジェクト）
+
+# 複数モデルの定義
+models:
+  # ローカルMLXモデル（優先度高）
+  - model: "mlx-community/gemma-2-2b-it-4bit"
+    provider: "mlx"
+    capabilities: ["local", "fast"]
+    priority: 10
+    enabled: true
+
+  # Vertex AI Gemini（優先度低）
+  - model: "gemini-2.0-flash-001"
+    provider: "vertexai"
+    capabilities: ["fast", "japanese", "reasoning", "tools"]
+    priority: 20
+    enabled: true
+
+# プロバイダーごとの認証情報
+drivers:
+  mlx: {}
+  vertexai:
+    project: "otolab-161708"
+    location: "us-central1"
+    credentialsPath: "~/.sprite-claude/otolab-vertexai-key.json"
+
+# モデル選択オプション
+selection:
+  preferLocal: true   # ローカルモデルを優先
+  preferFast: true    # 高速なモデルを優先
+  lenient: true       # 条件を満たすモデルがない場合は緩和
+  requiredCapabilities: []  # 常に必要な能力
+
+# Anthropic Server設定
+server:
+  port: 4000
+  host: "0.0.0.0"
+
+# ログ設定
+logging:
+  level: "info"
+  request_response_level: "full"
+
+# ランタイム設定
+runtime:
+  pid_dir: "~/.sprite-claude/run"
+  log_dir: "~/.sprite-claude/logs"

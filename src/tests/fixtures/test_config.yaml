@@ -1,0 +1,27 @@
+# Test configuration file
+
+mlx:
+  model: "mlx-community/Meta-Llama-3-8B-Instruct-4bit"
+  port: 8080
+  host: "localhost"
+
+litellm:
+  port: 4000
+  host: "0.0.0.0"
+  master_key: "sk-TEST-KEY"
+  request_timeout: 300
+
+system_prompt:
+  default: "You are a helpful AI assistant."
+  models:
+    claude-3-opus: "You are a coding assistant."
+
+model_mapping:
+  - claude_model: "claude-3-opus"
+    mlx_model: "mlx-llama3-8b-4bit"
+  - claude_model: "claude-3-5-sonnet"
+    mlx_model: "mlx-llama3-8b-4bit"
+
+runtime:
+  pid_dir: "~/.nympish-claude/run"
+  log_dir: "~/.nympish-claude/logs"

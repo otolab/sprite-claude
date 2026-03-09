@@ -1,0 +1,37 @@
+# Test configuration with multiple models (MLX + Vertex AI)
+# For testing AIService model selection capabilities
+
+models:
+  # Local MLX model - preferred for simple requests
+  - model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    provider: "mlx"
+    capabilities: ["local", "fast"]
+    priority: 20
+    enabled: true
+
+  # Vertex AI Gemini - preferred for tool-using requests
+  - model: "gemini-2.0-flash-exp"
+    provider: "vertexai"
+    capabilities: ["tools", "fast", "japanese"]
+    priority: 10
+    enabled: true
+
+drivers:
+  mlx: {}
+  vertexai:
+    project: "otolab-161708"
+    location: "us-central1"
+    credentialsPath: "~/.sprite-claude/otolab-vertexai-key.json"
+
+selection:
+  preferLocal: true  # Prefer MLX when capabilities match
+  preferFast: true
+  lenient: true
+
+server:
+  port: 4000
+  host: "0.0.0.0"
+
+logging:
+  level: "info"
+  request_response_level: "full"

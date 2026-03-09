@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build output
+dist/
+*.egg-info/
+*.tsbuildinfo
+
+# Cache
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# search-docs
+.search-docs/
+.search-docs.json
+
+# IDE / Editor
+.claude/
+
+# OS
+.DS_Store
+
+# Lockfiles (npm)
+package-lock.json

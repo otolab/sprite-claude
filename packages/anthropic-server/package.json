@@ -1,0 +1,57 @@
+{
+  "name": "@modular-prompt/anthropic-server",
+  "version": "0.1.0",
+  "description": "Minimal Anthropic Messages API compatible server using modular-prompt",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "anthropic-server": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:force": "tsc --build --force",
+    "clean": "tsc --build --clean",
+    "clean:logs": "rm -rf ~/.sprite-claude/logs/requests/*.json ~/.sprite-claude/logs/prompts/*.yaml",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build:force"
+  },
+  "dependencies": {
+    "@modular-prompt/core": "0.1.13",
+    "@modular-prompt/driver": "0.9.3",
+    "@modular-prompt/utils": "latest",
+    "@sprite-claude/engine": "workspace:*",
+    "commander": "^12.1.0",
+    "fastify": "^4.25.0",
+    "js-yaml": "^4.1.1",
+    "uuid": "^11.0.0",
+    "zod": "^3.22.0",
+    "zod-to-json-schema": "^3.25.0"
+  },
+  "devDependencies": {
+    "@modular-prompt/experiment": "^0.3.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "eslint": "^8.56.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.1.0"
+  },
+  "keywords": [
+    "anthropic",
+    "claude",
+    "api",
+    "server",
+    "modular-prompt"
+  ],
+  "author": "Naoto Kato",
+  "license": "MIT"
+}
