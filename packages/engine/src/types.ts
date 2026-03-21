@@ -28,7 +28,7 @@ export type WorkflowResult =
   | { type: 'tool_calls'; calls: ToolCallResult[]; text?: string }
   | { type: 'response'; text: string };
 
-export type WorkflowMode = 'rag' | 'decision' | 'chat' | 'passthrough';
+export type WorkflowMode = 'rag' | 'decision' | 'chat' | 'passthrough' | 'agentic';
 
 export interface WorkflowOptions {
   mode: WorkflowMode;

@@ -3,7 +3,7 @@
  */
 
 /**
- * Phase types in the MLX processing pipeline
+ * Phase types in the processing pipeline
  */
 export const PHASES = {
   // Request/Response
@@ -25,6 +25,9 @@ export const PHASES = {
   // Single-phase workflows
   PASSTHROUGH: 'passthrough',
   CHAT: 'chat',
+
+  // Agentic workflow
+  AGENTIC: 'agentic',
 } as const;
 
 export type Phase = typeof PHASES[keyof typeof PHASES];
@@ -43,7 +46,13 @@ export const PHASE_DESCRIPTIONS: Record<Phase, string> = {
   [PHASES.MAIN]: 'Main conversation (no tools)',
   [PHASES.PASSTHROUGH]: 'Passthrough workflow (single phase, direct API forwarding)',
   [PHASES.CHAT]: 'Chat workflow (single phase, conversational)',
+  [PHASES.AGENTIC]: 'Agentic workflow (planning + task execution)',
 };
+
+/**
+ * Workflow type detected from log entries
+ */
+export type WorkflowType = 'agentic' | 'passthrough' | 'rag' | 'decision' | 'chat' | 'routing' | 'unknown';
 
 /**
  * Log entry type for JSONL format
@@ -70,19 +79,26 @@ export interface ServerLogEntry {
 }
 
 /**
- * Session message summary
+ * Session message summary (for summary command)
  */
 export interface SessionMessage {
   seqId: string;
   timestamp: string;
+  filename: string;
+  workflow: WorkflowType;
+  toolCount: number;
+  messageCount: number;
+  stopReason: string;
+  model?: string;
   userMessage: string;
-  phase1Status: 'success' | 'failed' | 'missing';
+  toolNames?: string[];
+  error?: string;
+  // Legacy fields for backward compatibility
+  phase1Status?: 'success' | 'failed' | 'missing';
   phase1Type?: 'tool' | 'response';
-  phase2Status: 'success' | 'failed' | 'missing';
+  phase2Status?: 'success' | 'failed' | 'missing';
   phase2Type?: 'tool' | 'response';
   toolName?: string;
-  model?: string;
-  error?: string;
 }
 
 /**

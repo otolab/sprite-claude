@@ -3,7 +3,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import type { LogEntry, PhaseData, Phase } from './types.js';
+import type { LogEntry, PhaseData, Phase, WorkflowType } from './types.js';
 import { PHASES } from './types.js';
 
 /**
@@ -12,7 +12,6 @@ import { PHASES } from './types.js';
 export function findMessageEntry(entries: LogEntry[], query: string | null): LogEntry | null {
   const requestEntries: LogEntry[] = [];
 
-  // Collect all request entries
   for (const entry of entries) {
     if (entry.type === 'in' && entry.phase === PHASES.REQUEST) {
       requestEntries.push(entry);
@@ -23,12 +22,10 @@ export function findMessageEntry(entries: LogEntry[], query: string | null): Log
     return null;
   }
 
-  // If no query, return the latest (last) entry
   if (query === null) {
     return requestEntries[requestEntries.length - 1];
   }
 
-  // Search from newest to oldest
   for (let i = requestEntries.length - 1; i >= 0; i--) {
     const entry = requestEntries[i];
     const messages = entry.data.messages || [];
@@ -100,7 +97,7 @@ export function displayPhaseData(
 
   if (phaseData.prompt && showPrompt) {
     const header = '\n' + '='.repeat(80) + '\n' +
-                   `📝 ${phaseName} - PROMPT\n` +
+                   `  ${phaseName} - PROMPT\n` +
                    '='.repeat(80) + '\n\n';
     console.log(header + phaseData.prompt);
   }
@@ -108,7 +105,7 @@ export function displayPhaseData(
   if (phaseData.output && showOutput) {
     const output = phaseData.output.content || JSON.stringify(phaseData.output, null, 2);
     const header = '\n' + '='.repeat(80) + '\n' +
-                   `📤 ${phaseName} - OUTPUT\n` +
+                   `  ${phaseName} - OUTPUT\n` +
                    '='.repeat(80) + '\n\n';
     console.log(header + output);
   }
@@ -129,7 +126,7 @@ export function displayPhaseData(
     }
     if (meta.length > 0) {
       const header = '\n' + '-'.repeat(60) + '\n' +
-                     `📊 ${phaseName} - META\n` +
+                     `  ${phaseName} - META\n` +
                      '-'.repeat(60);
       console.log(header);
       for (const line of meta) {
@@ -139,10 +136,33 @@ export function displayPhaseData(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Request structure display (show --seq)
+// ---------------------------------------------------------------------------
+
 /**
- * Display a structural overview of all entries for a request
+ * Detect workflow type from entries
  */
-export function inspectRequest(entries: LogEntry[], seqId: string): void {
+function detectWorkflow(entries: LogEntry[], requestData: any): WorkflowType {
+  if (entries.some(e => e.phase === PHASES.AGENTIC)) {
+    const tools = requestData?.tools?.length || 0;
+    if (tools === 0) return 'routing';
+    return 'agentic';
+  }
+  if (entries.some(e => e.phase === PHASES.PASSTHROUGH)) return 'passthrough';
+  if (entries.some(e => e.phase === PHASES.PHASE1_ANALYSIS)) return 'rag';
+  if (entries.some(e => e.phase === PHASES.PHASE1_DECISION)) return 'decision';
+  if (entries.some(e => e.phase === PHASES.CHAT)) return 'chat';
+  return 'unknown';
+}
+
+/**
+ * Display structural overview of a request (show --seq)
+ *
+ * Shows file path, line numbers, and entry summaries.
+ * The viewer can use line numbers to jump to raw JSONL.
+ */
+export function inspectRequest(entries: LogEntry[], seqId: string, filePath?: string): void {
   const requestEntries = entries.filter(e => e.seqId === seqId);
 
   if (requestEntries.length === 0) {
@@ -151,19 +171,20 @@ export function inspectRequest(entries: LogEntry[], seqId: string): void {
   }
 
   const requestIn = requestEntries.find(e => e.phase === PHASES.REQUEST && e.type === 'in');
-  const timestamp = requestIn?.timestamp || requestEntries[0].timestamp;
-  const requestedModel = requestIn?.data?.model || '?';
-  const toolCount = requestIn?.data?.tools?.length || 0;
-  const messageCount = requestIn?.data?.messages?.length || 0;
+  const requestData = requestIn?.data;
+  const workflow = detectWorkflow(requestEntries, requestData);
+  const llmResponse = requestEntries.find(e => e.type === 'llm_response');
+  const model = llmResponse?.data?.model || '?';
 
-  console.log(`\nSeqID: ${seqId}`);
-  console.log(`Timestamp: ${timestamp}`);
-  console.log(`Model (requested): ${requestedModel}`);
-  console.log(`Tools: ${toolCount}`);
-  console.log(`Messages: ${messageCount}`);
-  console.log(`\nEntries:`);
+  console.log(`\n  SeqID: ${seqId} | ${workflow} | ${model}`);
+  if (filePath) {
+    console.log(`  File: ${filePath}`);
+  }
+  console.log(`  Entries:`);
 
-  for (const entry of requestEntries) {
+  for (let i = 0; i < requestEntries.length; i++) {
+    const entry = requestEntries[i];
+    const lineNum = `L${i + 1}`;
     const tag = `${entry.phase}/${entry.type}`;
     const details: string[] = [];
 
@@ -173,29 +194,162 @@ export function inspectRequest(entries: LogEntry[], seqId: string): void {
       details.push(`messages=${entry.data.messages?.length || 0}`);
     } else if (entry.type === 'prompt') {
       const contentLen = entry.data.content?.length || 0;
-      details.push(`content_length=${contentLen}`);
+      details.push(`${contentLen} chars`);
       if (entry.data.toolCount !== undefined) {
-        details.push(`tool_count=${entry.data.toolCount}`);
+        details.push(`tools=${entry.data.toolCount}`);
       }
     } else if (entry.type === 'llm_response') {
       if (entry.data.model) details.push(`model=${entry.data.model}`);
       details.push(`finish=${entry.data.finishReason || '?'}`);
-      details.push(`content_len=${entry.data.content?.length || 0}`);
+      const content = entry.data.content || '';
+      details.push(`${content.length} chars`);
       const tcCount = entry.data.toolCalls?.length || 0;
       if (tcCount > 0) {
-        details.push(`toolCalls=${tcCount}(${entry.data.toolCalls.map((t: any) => t.name).join(',')})`);
-      } else {
-        details.push(`toolCalls=0`);
+        const names = entry.data.toolCalls.map((t: any) => t.name).join(', ');
+        details.push(`toolCalls=${tcCount}(${names})`);
+      }
+      if (content.includes('<think>')) {
+        details.push('has-think');
       }
     } else if (entry.type === 'out' && entry.phase === PHASES.RESPONSE) {
-      details.push(`stop_reason=${entry.data.stop_reason || '?'}`);
-      details.push(`content_blocks=${entry.data.content?.length || 0}`);
+      details.push(`stop=${entry.data.stop_reason || '?'}`);
+      const blocks = entry.data.content || [];
+      const types = blocks.map((b: any) => b.type);
+      details.push(`blocks=[${types.join(', ')}]`);
     } else if (entry.type === 'error') {
-      details.push(`message=${entry.data.message || '?'}`);
+      details.push(entry.data.message || '?');
     }
 
-    console.log(`  ${tag.padEnd(35)} | ${details.join(' ')}`);
+    console.log(`    ${lineNum.padEnd(4)} ${tag.padEnd(30)} ${details.join('  ')}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Message structure display (show --seq --messages)
+// ---------------------------------------------------------------------------
+
+/**
+ * Truncate text for display, replacing newlines
+ */
+function truncate(text: string, maxLen: number): string {
+  const single = text.replace(/\n/g, '\\n');
+  if (single.length <= maxLen) return single;
+  return single.substring(0, maxLen - 3) + '...';
+}
+
+/**
+ * Display message structure map
+ *
+ * Shows each message and content block with JSONPath-like references
+ * so the viewer can locate data in raw JSONL.
+ */
+export function displayMessages(requestData: any): void {
+  const messages = requestData?.messages || [];
+
+  console.log(`\n  Messages: ${messages.length} entries  (in .data.messages)\n`);
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    const role = msg.role;
+    const prefix = `  [${i}]`;
+
+    if (typeof msg.content === 'string') {
+      const hasReminder = msg.content.includes('<system-reminder>');
+      const label = hasReminder ? '<system-reminder>' : truncate(msg.content, 60);
+      console.log(`${prefix}  ${role.padEnd(10)} text        ${msg.content.length} chars  ${label}`);
+    } else if (Array.isArray(msg.content)) {
+      for (let j = 0; j < msg.content.length; j++) {
+        const block = msg.content[j];
+        const bp = `.content[${j}]`;
+
+        if (block.type === 'text') {
+          const text = block.text || '';
+          let label: string;
+          if (text.includes('<system-reminder>')) {
+            label = '<system-reminder>';
+          } else if (text.includes('<think>')) {
+            // Show think content briefly
+            const thinkEnd = text.indexOf('</think>');
+            const inner = thinkEnd > 0 ? text.substring(7, thinkEnd).trim() : '';
+            label = `<think> ${truncate(inner || '(empty)', 50)}`;
+          } else {
+            label = truncate(text, 60);
+          }
+          console.log(`${prefix}  ${role.padEnd(10)} text     ${bp.padEnd(14)} ${String(text.length).padStart(5)} chars  ${label}`);
+        } else if (block.type === 'tool_use') {
+          const shortName = block.name.split('__').pop() || block.name;
+          const idShort = block.id?.substring(0, 16) || '?';
+          console.log(`${prefix}  ${role.padEnd(10)} tool_use ${bp.padEnd(14)} id=${idShort}  ${shortName}`);
+        } else if (block.type === 'tool_result') {
+          const idShort = block.tool_use_id?.substring(0, 16) || '?';
+          let contentPreview = '';
+          if (typeof block.content === 'string') {
+            contentPreview = truncate(block.content, 40);
+          } else if (Array.isArray(block.content)) {
+            const text = block.content.map((c: any) => c.text || '').join(' ');
+            contentPreview = truncate(text, 40);
+          }
+          const errFlag = block.is_error ? ' ERROR' : '';
+          console.log(`${prefix}  ${role.padEnd(10)} tool_res ${bp.padEnd(14)} id=${idShort}  ${contentPreview}${errFlag}`);
+        } else {
+          console.log(`${prefix}  ${role.padEnd(10)} ${block.type.padEnd(8)} ${bp}`);
+        }
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Raw value extraction (show --raw)
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract a value from JSONL entry data using a simple dot-path.
+ *
+ * Supported paths:
+ *   .data.messages[1].content[0].text
+ *   .data.content
+ *   .data.toolCalls[0].arguments
+ *
+ * Line number (L1, L2, ...) can prefix to select the entry:
+ *   L3.data.content
+ */
+export function extractRawValue(entries: LogEntry[], pathExpr: string): string | null {
+  let targetEntry: LogEntry | undefined;
+  let dotPath = pathExpr;
+
+  // Parse Ln prefix
+  const lineMatch = pathExpr.match(/^L(\d+)\.(.*)$/);
+  if (lineMatch) {
+    const lineIdx = parseInt(lineMatch[1]) - 1;
+    if (lineIdx < 0 || lineIdx >= entries.length) return null;
+    targetEntry = entries[lineIdx];
+    dotPath = lineMatch[2];
+  } else {
+    // Default to first entry
+    targetEntry = entries[0];
+    if (dotPath.startsWith('.')) dotPath = dotPath.substring(1);
+  }
+
+  if (!targetEntry) return null;
+
+  // Navigate the path
+  let current: any = targetEntry;
+  const segments = dotPath.match(/[^.\[\]]+|\[\d+\]/g) || [];
+
+  for (const seg of segments) {
+    if (current === undefined || current === null) return null;
+    const idxMatch = seg.match(/^\[(\d+)\]$/);
+    if (idxMatch) {
+      current = current[parseInt(idxMatch[1])];
+    } else {
+      current = current[seg];
+    }
+  }
+
+  if (current === undefined || current === null) return null;
+  if (typeof current === 'string') return current;
+  return JSON.stringify(current, null, 2);
 }
 
 /**
@@ -208,7 +362,7 @@ export function savePhaseData(phaseData: PhaseData, seqId: string): void {
     const filename = `${phaseName}_prompt_${seqId}.txt`;
     const outputPath = path.join('/tmp', filename);
     fs.writeFileSync(outputPath, phaseData.prompt, 'utf-8');
-    console.log(`✓ Saved prompt to: ${outputPath}`);
+    console.log(`  Saved prompt to: ${outputPath}`);
   }
 
   if (phaseData.output) {
@@ -216,6 +370,6 @@ export function savePhaseData(phaseData: PhaseData, seqId: string): void {
     const filename = `${phaseName}_output_${seqId}.txt`;
     const outputPath = path.join('/tmp', filename);
     fs.writeFileSync(outputPath, output, 'utf-8');
-    console.log(`✓ Saved output to: ${outputPath}`);
+    console.log(`  Saved output to: ${outputPath}`);
   }
 }
