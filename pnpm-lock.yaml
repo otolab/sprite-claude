@@ -89,8 +89,8 @@ importers:
         specifier: 0.10.1
         version: 0.10.1(ws@8.19.0)(zod@3.25.76)
       '@modular-prompt/process':
-        specifier: 0.2.2
-        version: 0.2.2(ws@8.19.0)(zod@3.25.76)
+        specifier: 0.3.0
+        version: 0.3.0(ws@8.19.0)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -502,8 +502,8 @@ packages:
     resolution: {integrity: sha512-5FW65ipSmbUY6mos30bimjspaaCLCWvlYr0iSQgYIyFnoKoC7Dy/lL5KJrhOVN8PxfDjinyaps4aW9AcMcxyJA==}
     engines: {node: '>=18.0.0'}
 
-  '@modular-prompt/process@0.2.2':
-    resolution: {integrity: sha512-Eybw5gqoMZiBdWNt/QBHqspX3iBoLCjWv48nzwW1P9Er8ZDDPGpP6tGFpyZ+8VwyknNqSED63HpFGbfVDLi6CA==}
+  '@modular-prompt/process@0.3.0':
+    resolution: {integrity: sha512-YuNcZSX0487WZ0u8ilH/MkeG0yYuAnWuEHCsfLZIxI53thUIaB4URKW8ZTUy992AldHAEQDVhV/H1dZbFgh9xA==}
     engines: {node: '>=18.0.0'}
 
   '@modular-prompt/utils@0.2.4':
@@ -2151,7 +2151,7 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/process@0.2.2(ws@8.19.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.3.0(ws@8.19.0)(zod@3.25.76)':
     dependencies:
       '@modular-prompt/core': 0.2.1
       '@modular-prompt/driver': 0.10.1(ws@8.19.0)(zod@3.25.76)
