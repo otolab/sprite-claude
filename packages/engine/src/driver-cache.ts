@@ -33,10 +33,10 @@ export async function resolveDriver(
   aiService: AIService,
   capabilities: DriverCapability[] = [],
   hints?: SelectionOptions,
-): Promise<ResolvedDriver> {
-  const models = aiService.selectModels(capabilities, { lenient: true, ...hints });
+): Promise<ResolvedDriver | null> {
+  const models = aiService.selectModels(capabilities, hints);
   if (!models.length) {
-    throw new Error(`No suitable model found for capabilities: [${capabilities.join(', ')}]`);
+    return null;
   }
 
   const spec = models[0];

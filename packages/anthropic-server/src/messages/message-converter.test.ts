@@ -67,7 +67,7 @@ describe('convertMessages', () => {
     expect(result.messages[0].content).toBe('Text');
   });
 
-  it('should handle tool_result blocks', () => {
+  it('should handle tool_result blocks (skipped, tools passed separately)', () => {
     const request: MessagesRequest = {
       model: 'test',
       max_tokens: 100,
@@ -84,13 +84,12 @@ describe('convertMessages', () => {
 
     const result = convertMessages(request);
 
-    // Now tool_result is a separate MessageElement with role
-    expect(result.messages).toHaveLength(2);
+    // tool_result blocks are skipped; only text content is extracted
+    expect(result.messages).toHaveLength(1);
     expect(result.messages[0]).toEqual({ type: 'message', role: 'user', content: 'Query' });
-    expect(result.messages[1]).toEqual({ type: 'message', role: 'user', content: '[Tool result from tool_123: Result data]' });
   });
 
-  it('should handle tool_use blocks', () => {
+  it('should handle tool_use blocks (skipped, tools passed separately)', () => {
     const request: MessagesRequest = {
       model: 'test',
       max_tokens: 100,
@@ -107,10 +106,9 @@ describe('convertMessages', () => {
 
     const result = convertMessages(request);
 
-    // Now tool_use is a separate MessageElement with role
-    expect(result.messages).toHaveLength(2);
+    // tool_use blocks are skipped; only text content is extracted
+    expect(result.messages).toHaveLength(1);
     expect(result.messages[0]).toEqual({ type: 'message', role: 'assistant', content: 'Let me check' });
-    expect(result.messages[1]).toEqual({ type: 'message', role: 'assistant', content: '[Assistant called the get_weather tool (location: "Tokyo")]' });
   });
 
   it('should skip empty messages', () => {

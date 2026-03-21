@@ -12,8 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modular-prompt/core": "0.2.0",
-    "@modular-prompt/driver": "0.10.0"
+    "@modular-prompt/core": "0.2.1",
+    "@modular-prompt/driver": "0.10.1",
+    "@modular-prompt/process": "0.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

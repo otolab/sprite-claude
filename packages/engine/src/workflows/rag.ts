@@ -47,7 +47,11 @@ export async function ragWorkflow(
   }
 ): Promise<WorkflowResult> {
   // Phase 1: Analysis - reasoning capability preferred
-  const { driver: phase1Driver, model: phase1Model } = await resolveDriver(aiService, ['reasoning'], { preferLocal: true });
+  const phase1Resolved = await resolveDriver(aiService, ['reasoning'], { preferLocal: true });
+  if (!phase1Resolved) {
+    throw new Error('No suitable model found for rag phase1.');
+  }
+  const { driver: phase1Driver, model: phase1Model } = phase1Resolved;
 
   // Phase 1: Analysis
   const analysisContext = createContext(analysisModule);
@@ -133,7 +137,11 @@ export async function ragWorkflow(
     const toolGenCompiled = compile(toolGenerationModule, toolGenContext);
 
     // Phase 2 (Tool): local fast model preferred
-    const { driver: phase2ToolDriver, model: phase2ToolModel } = await resolveDriver(aiService, ['local', 'fast']);
+    const phase2ToolResolved = await resolveDriver(aiService, ['local', 'fast']);
+    if (!phase2ToolResolved) {
+      throw new Error('No suitable model found for rag phase2 tool.');
+    }
+    const { driver: phase2ToolDriver, model: phase2ToolModel } = phase2ToolResolved;
 
     // Log Phase 2 prompt
     logger.logPrompt('phase2-tool-generation', toolGenCompiled);
@@ -188,7 +196,11 @@ export async function ragWorkflow(
     const responseGenCompiled = compile(responseGenerationModule, responseGenContext);
 
     // Phase 2 (Response): local fast model preferred
-    const { driver: phase2ResponseDriver, model: phase2ResponseModel } = await resolveDriver(aiService, ['local', 'fast']);
+    const phase2ResponseResolved = await resolveDriver(aiService, ['local', 'fast']);
+    if (!phase2ResponseResolved) {
+      throw new Error('No suitable model found for rag phase2 response.');
+    }
+    const { driver: phase2ResponseDriver, model: phase2ResponseModel } = phase2ResponseResolved;
 
     // Log Phase 2 prompt
     logger.logPrompt('phase2-response-generation', responseGenCompiled);

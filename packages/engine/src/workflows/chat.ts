@@ -52,7 +52,11 @@ export async function chatWorkflow(
   const compiled = compile(mergedModule, context);
 
   // Resolve driver for chat
-  const { driver, model } = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true });
+  const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true });
+  if (!resolved) {
+    throw new Error('No suitable model found for chat.');
+  }
+  const { driver, model } = resolved;
 
   // Log prompt
   logger.logPrompt('chat', compiled);

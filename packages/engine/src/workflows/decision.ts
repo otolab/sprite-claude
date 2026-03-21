@@ -30,7 +30,11 @@ export async function decisionWorkflow(
   const userMessage = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
 
   // Phase 1: reasoning model for decision
-  const { driver: phase1Driver, model: phase1Model } = await resolveDriver(aiService, ['reasoning'], { preferLocal: true });
+  const phase1Resolved = await resolveDriver(aiService, ['reasoning'], { preferLocal: true });
+  if (!phase1Resolved) {
+    throw new Error('No suitable model found for decision phase1.');
+  }
+  const { driver: phase1Driver, model: phase1Model } = phase1Resolved;
 
   // Format available tools - simplified (name + description only)
   const availableTools = tools.map(tool =>
@@ -87,7 +91,11 @@ ${Object.entries(params).map(([name, def]) => {
   const toolCallCompiled = compile(toolCallModule, toolCallContext);
 
   // Phase 2: local fast model for tool call generation
-  const { driver: phase2Driver, model: phase2Model } = await resolveDriver(aiService, ['local', 'fast', 'tools']);
+  const phase2Resolved = await resolveDriver(aiService, ['local', 'fast', 'tools']);
+  if (!phase2Resolved) {
+    throw new Error('No suitable model found for decision phase2.');
+  }
+  const { driver: phase2Driver, model: phase2Model } = phase2Resolved;
 
   // Log Phase 2 prompt
   logger.logPrompt('phase2-tool-call', toolCallCompiled);

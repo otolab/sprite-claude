@@ -56,7 +56,7 @@ export interface AnthropicServerOptions {
 
   // Workflow mode override
   workflow?: {
-    mode?: 'rag' | 'decision' | 'chat' | 'passthrough';
+    mode?: 'rag' | 'decision' | 'chat' | 'passthrough' | 'agentic';
   };
 }
 

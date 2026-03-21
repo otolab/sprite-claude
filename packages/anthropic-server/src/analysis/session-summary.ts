@@ -1,9 +1,74 @@
 /**
  * Session summary extraction and display
  */
-import type { SessionMessage } from './types.js';
+import path from 'path';
+import type { LogEntry, SessionMessage, WorkflowType } from './types.js';
 import { PHASES } from './types.js';
 import { parseLogFile } from './log-reader.js';
+
+/**
+ * Detect workflow type from log entries
+ */
+function detectWorkflow(entries: LogEntry[], requestData: any): WorkflowType {
+  // Check by phase presence
+  if (entries.some(e => e.phase === PHASES.AGENTIC)) {
+    // Agentic workflow: distinguish routing vs main
+    const tools = requestData?.tools?.length || 0;
+    if (tools === 0) return 'routing';
+    return 'agentic';
+  }
+  if (entries.some(e => e.phase === PHASES.PASSTHROUGH)) return 'passthrough';
+  if (entries.some(e => e.phase === PHASES.PHASE1_ANALYSIS)) return 'rag';
+  if (entries.some(e => e.phase === PHASES.PHASE1_DECISION)) return 'decision';
+  if (entries.some(e => e.phase === PHASES.CHAT)) return 'chat';
+  if (entries.some(e => e.phase === PHASES.MAIN)) return 'chat';
+  return 'unknown';
+}
+
+/**
+ * Extract last user message text (excluding system-reminder)
+ */
+function extractUserMessage(requestData: any): string {
+  const messages = requestData?.messages || [];
+  // Find last user message
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role !== 'user') continue;
+
+    if (typeof msg.content === 'string') {
+      const cleaned = msg.content.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+      if (cleaned) return cleaned;
+    } else if (Array.isArray(msg.content)) {
+      // Find text blocks that aren't system-reminder or tool_result
+      for (let j = msg.content.length - 1; j >= 0; j--) {
+        const block = msg.content[j];
+        if (block.type === 'text') {
+          const cleaned = block.text.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+          if (cleaned) return cleaned;
+        }
+      }
+    }
+  }
+  // If all user messages are tool_result, indicate that
+  const lastMsg = messages[messages.length - 1];
+  if (lastMsg?.role === 'user') {
+    const content = lastMsg.content;
+    if (Array.isArray(content) && content.every((b: any) => b.type === 'tool_result')) {
+      return '(tool_result)';
+    }
+  }
+  return '';
+}
+
+/**
+ * Extract tool names from response
+ */
+function extractToolNames(responseData: any): string[] {
+  if (!responseData?.content) return [];
+  return responseData.content
+    .filter((b: any) => b.type === 'tool_use')
+    .map((b: any) => b.name);
+}
 
 /**
  * Extract session summary from log files
@@ -16,106 +81,40 @@ export function extractSessionSummary(sessionFiles: string[]): SessionMessage[] 
     const seqId = entries[0]?.seqId;
     if (!seqId) continue;
 
-    // Find user message
+    const filename = path.basename(file);
     const requestEntry = entries.find(e => e.type === 'in' && e.phase === PHASES.REQUEST);
     if (!requestEntry) continue;
 
-    const userMessages = requestEntry.data.messages?.filter((m: any) =>
-      m.role === 'user' && m.content
-    ) || [];
+    const requestData = requestEntry.data;
+    const toolCount = requestData.tools?.length || 0;
+    const messageCount = requestData.messages?.length || 0;
+    const userMessage = extractUserMessage(requestData);
+    const workflow = detectWorkflow(entries, requestData);
 
-    const lastUserMsg = userMessages[userMessages.length - 1];
-    const userMessage = Array.isArray(lastUserMsg?.content)
-      ? lastUserMsg.content.map((c: any) => c.text || '').join(' ')
-      : lastUserMsg?.content || '';
+    // Find response
+    const responseEntry = entries.find(e => e.type === 'out' && e.phase === PHASES.RESPONSE);
+    const stopReason = responseEntry?.data?.stop_reason || '?';
+    const toolNames = responseEntry ? extractToolNames(responseEntry.data) : [];
 
-    // Check for passthrough/chat workflow (single phase, no P1/P2)
-    const passthroughOutput = entries.find(e =>
-      e.phase === 'passthrough' && e.type === 'llm_response'
-    );
-    const chatOutput = entries.find(e =>
-      e.phase === 'chat' && e.type === 'llm_response'
-    );
-
-    if (passthroughOutput || chatOutput) {
-      const output = passthroughOutput || chatOutput;
-      const workflowType = passthroughOutput ? 'passthrough' : 'chat';
-      const reason = output!.data.finishReason;
-      const status = (reason === 'stop' || reason === 'tool_calls') ? 'success' : 'failed';
-
-      messages.push({
-        seqId,
-        timestamp: requestEntry.timestamp,
-        userMessage: userMessage.substring(0, 100) + (userMessage.length > 100 ? '...' : ''),
-        phase1Status: status,
-        phase1Type: 'response',
-        phase2Status: 'missing',
-        toolName: workflowType,  // ワークフロー種別を tool 欄で表示
-        model: output!.data.model,
-      });
-      continue;
-    }
-
-    // Check Phase1
-    const phase1Output = entries.find(e =>
-      (e.phase === PHASES.PHASE1_ANALYSIS || e.phase === PHASES.PHASE1_DECISION)
-      && e.type === 'llm_response'
-    );
-    const phase1Status = phase1Output
-      ? (phase1Output.data.finishReason === 'stop' ? 'success' : 'failed')
-      : 'missing';
-
-    // Extract Phase1 type (tool/response)
-    let phase1Type: 'tool' | 'response' | undefined;
-    if (phase1Output?.data?.structuredOutput) {
-      phase1Type = phase1Output.data.structuredOutput.action?.type;
-    }
-
-    // Check Phase2
-    const phase2Output = entries.find(e =>
-      (e.phase === PHASES.PHASE2_TOOL_GENERATION ||
-       e.phase === PHASES.PHASE2_RESPONSE_GENERATION ||
-       e.phase === PHASES.PHASE2_TOOL_CALL)
-      && e.type === 'llm_response'
-    );
-    const phase2Status = phase2Output
-      ? (phase2Output.data.finishReason === 'stop' ? 'success' : 'failed')
-      : 'missing';
-
-    // Determine Phase2 type from phase name
-    let phase2Type: 'tool' | 'response' | undefined;
-    if (phase2Output) {
-      phase2Type = (phase2Output.phase === PHASES.PHASE2_TOOL_GENERATION ||
-                    phase2Output.phase === PHASES.PHASE2_TOOL_CALL) ? 'tool' : 'response';
-    }
-
-    // Extract tool name from phase1
-    let toolName: string | undefined;
-    if (phase1Output?.data?.structuredOutput) {
-      toolName = phase1Output.data.structuredOutput.action?.toolName;
-    }
+    // Find model from LLM response
+    const llmResponse = entries.find(e => e.type === 'llm_response');
+    const model = llmResponse?.data?.model;
 
     // Check for errors
-    const responseEntry = entries.find(e => e.phase === PHASES.RESPONSE && e.type === 'out');
-    let error: string | undefined;
-    if (responseEntry?.data?.content?.[0]?.text === 'Failed to generate tool parameters') {
-      error = 'Failed to generate tool parameters';
-    }
-
-    // Extract model from first llm_response
-    const firstLlmResponse = entries.find(e => e.type === 'llm_response');
-    const model = firstLlmResponse?.data?.model;
+    const errorEntry = entries.find(e => e.type === 'error');
+    const error = errorEntry?.data?.message;
 
     messages.push({
       seqId,
       timestamp: requestEntry.timestamp,
-      userMessage: userMessage.substring(0, 100) + (userMessage.length > 100 ? '...' : ''),
-      phase1Status,
-      phase1Type,
-      phase2Status,
-      phase2Type,
-      toolName,
+      filename,
+      workflow,
+      toolCount,
+      messageCount,
+      stopReason,
       model,
+      userMessage: userMessage.substring(0, 80) + (userMessage.length > 80 ? '...' : ''),
+      toolNames: toolNames.length > 0 ? toolNames : undefined,
       error,
     });
   }
@@ -124,50 +123,80 @@ export function extractSessionSummary(sessionFiles: string[]): SessionMessage[] 
 }
 
 /**
+ * Format workflow type for display (fixed width)
+ */
+function fmtWorkflow(wf: WorkflowType): string {
+  const labels: Record<WorkflowType, string> = {
+    agentic: 'agentic',
+    passthrough: 'passthru',
+    rag: 'rag',
+    decision: 'decision',
+    chat: 'chat',
+    routing: 'routing',
+    unknown: '?',
+  };
+  return (labels[wf] || '?').padEnd(8);
+}
+
+/**
+ * Format result column: stop_reason + tool names
+ */
+function fmtResult(msg: SessionMessage): string {
+  if (msg.stopReason === 'tool_use' && msg.toolNames?.length) {
+    const names = msg.toolNames;
+    // Shorten tool names: mcp__coeiro-operator__say -> say
+    const short = names.map(n => {
+      const parts = n.split('__');
+      return parts[parts.length - 1];
+    });
+    if (names.length === 1) {
+      return short[0];
+    }
+    // Deduplicate
+    const unique = [...new Set(short)];
+    if (unique.length === 1) {
+      return `${unique[0]} x${names.length}`;
+    }
+    return unique.join(', ');
+  }
+  if (msg.stopReason === 'end_turn') return 'text';
+  return msg.stopReason;
+}
+
+/**
  * Display session summary table
  */
 export function displaySessionSummary(summary: SessionMessage[], sessionId: number | string): void {
-  console.log(`\n📊 Session Summary\n`);
-  console.log(`🔍 Session ID (PID): ${sessionId}`);
-  console.log(`📁 Total requests: ${summary.length}\n`);
+  console.log(`\nSession: PID ${sessionId} (${summary.length} requests)`);
+  console.log(`Path: ~/.sprite-claude/logs/requests/\n`);
 
-  // Determine if any message has a model name to show
-  const hasModels = summary.some(m => m.model);
-  const modelColWidth = 30;
-
-  console.log('P1/P2 Format: [Status][Type]  Status: ✓=success ✗=failed -=missing  Type: T=tool R=response\n');
-  const headerWidth = hasModels ? 170 : 140;
-  console.log('='.repeat(headerWidth));
-  const modelHeader = hasModels ? ` Model${' '.repeat(modelColWidth - 6)} |` : '';
-  console.log(`SeqID | Timestamp | P1      | P2      | Tool${' '.repeat(26)} |${modelHeader} User Message`);
-  console.log('='.repeat(headerWidth));
+  const header = `  Seq   Time      WF        Tools  Msgs  Result                  Model                  Message`;
+  console.log(header);
+  console.log('  ' + '-'.repeat(header.length - 2));
 
   for (const msg of summary) {
-    const timestamp = new Date(msg.timestamp).toISOString().substring(11, 19);
+    const time = new Date(msg.timestamp).toISOString().substring(11, 19);
+    const wf = fmtWorkflow(msg.workflow);
+    const tools = String(msg.toolCount).padStart(3);
+    const msgs = String(msg.messageCount).padStart(3);
+    const result = fmtResult(msg).padEnd(22).substring(0, 22);
+    const model = (msg.model || '-').padEnd(22).substring(0, 22);
+    const userMsg = msg.userMessage.substring(0, 40);
+    const warn = msg.error ? ' !' : '';
 
-    // Phase1: status + type
-    const p1Status = msg.phase1Status === 'success' ? '✓' : msg.phase1Status === 'failed' ? '✗' : '-';
-    const p1Type = msg.phase1Type ? (msg.phase1Type === 'tool' ? 'T' : 'R') : ' ';
-    const phase1 = `${p1Status}${p1Type}`;
-
-    // Phase2: status + type
-    const p2Status = msg.phase2Status === 'success' ? '✓' : msg.phase2Status === 'failed' ? '✗' : '-';
-    const p2Type = msg.phase2Type ? (msg.phase2Type === 'tool' ? 'T' : 'R') : ' ';
-    const phase2 = `${p2Status}${p2Type}`;
-
-    const tool = (msg.toolName || '-').padEnd(30).substring(0, 30);
-    const modelCol = hasModels ? ` ${(msg.model || '-').padEnd(modelColWidth).substring(0, modelColWidth)} |` : '';
-    const userMsg = msg.userMessage.padEnd(40).substring(0, 40);
-
-    const status = msg.error ? '⚠' : '';
-    console.log(`${msg.seqId} | ${timestamp} | ${phase1.padEnd(7)} | ${phase2.padEnd(7)} | ${tool} |${modelCol} ${userMsg} ${status}`);
+    console.log(`  ${msg.seqId}  ${time}  ${wf}  ${tools}   ${msgs}  ${result}  ${model}  ${userMsg}${warn}`);
 
     if (msg.error) {
-      console.log(`       └─ ERROR: ${msg.error}`);
+      console.log(`        -> ${msg.error}`);
     }
   }
 
-  console.log('='.repeat(headerWidth));
-  console.log(`\n✓ Total messages: ${summary.length}`);
-  console.log(`✓ Failures: ${summary.filter(m => m.error || m.phase1Status === 'failed' || m.phase2Status === 'failed').length}\n`);
+  console.log('  ' + '-'.repeat(header.length - 2));
+
+  const errors = summary.filter(m => m.error).length;
+  if (errors > 0) {
+    console.log(`  ${summary.length} requests, ${errors} errors\n`);
+  } else {
+    console.log(`  ${summary.length} requests\n`);
+  }
 }

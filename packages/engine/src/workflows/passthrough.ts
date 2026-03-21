@@ -36,6 +36,9 @@ export async function passthroughWorkflow(
   options: WorkflowOptions,
 ): Promise<WorkflowResult> {
   const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true });
+  if (!resolved) {
+    throw new Error('No suitable model found for passthrough.');
+  }
 
   // Log driver capabilities on first use
   if (resolved.isNew) {
