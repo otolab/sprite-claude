@@ -44,14 +44,12 @@ const module: PromptModule<AgenticWorkflowContext> = {
 
 ```typescript
 const context: AgenticWorkflowContext = {
-  objective,     // 最後のユーザーメッセージのテキスト
+  objective: '対話履歴に基づいてユーザーに応答する',
   taskList,      // [{ taskType: 'output', instruction: '会話に応答して' }]
 };
 ```
 
-**objective の抽出**:
-- 最後のユーザーメッセージのテキスト部分を結合したもの
-- 複数の text ブロックがある場合は改行で結合
+**objective**: 全タスクに instruction として渡される主要な目的。簡潔な指示文を設定する（ユーザーメッセージは module.messages に含まれるため重複不要）。
 
 **taskList**:
 - `output` タスク1つのみを設定（`enablePlanning: false` のため）

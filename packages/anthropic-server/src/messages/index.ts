@@ -3,7 +3,7 @@ import type { ToolCall, MessageElement, PromptModule } from '@modular-prompt/cor
 import type { MessagesRequest, MessagesResponse, ContentBlock, TextBlock, ToolUseBlock } from '../schema.js';
 import { v4 as uuidv4 } from 'uuid';
 import { compile } from '@modular-prompt/core';
-import { process as engineProcess, passthroughWorkflow, agenticWorkflow, resolveDriver, type WorkflowResult, type WorkflowMode, type AgenticWorkflowContext, type AgenticTask } from '@sprite-claude/engine';
+import { process as engineProcess, passthroughWorkflow, agenticWorkflow, resolveDriver, type WorkflowResult, type WorkflowMode, type AgenticTask } from '@sprite-claude/engine';
 import { createRequestLogger, toEngineLogger, type ServerLogger } from '../server/logging.js';
 import { convertMessages } from './message-converter.js';
 import { loadSystemPromptModule } from './system-prompt.js';
@@ -347,7 +347,7 @@ export async function handleMessages(
       // system-reminder を user message から抽出して materials に入れる
       const { elements, systemReminders } = extractSystemReminders(request.messages);
 
-      const module: PromptModule<AgenticWorkflowContext> = {
+      const module: PromptModule = {
         objective: [
           '- Messagesの対話履歴をよく読み、最新のメッセージの続きとなる新しいassistantメッセージを作ります',
           '- 応答メッセージはPersona and Charactorの設定を踏まえて作成してください',
@@ -366,25 +366,8 @@ export async function handleMessages(
         messages: elements,
       };
 
-      // Extract last user message as objective
-      const lastUserMessage = [...request.messages].reverse().find(m => m.role === 'user');
-      let objective = '';
-      if (lastUserMessage) {
-        if (typeof lastUserMessage.content === 'string') {
-          objective = lastUserMessage.content;
-        } else {
-          objective = lastUserMessage.content
-            .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-            .map(b => b.text)
-            .join('\n');
-        }
-      }
-
       const taskList: AgenticTask[] = [{ taskType: 'output', instruction: '会話に応答して' }];
-      const context: AgenticWorkflowContext = {
-        objective,
-        taskList,
-      };
+      const context = { taskList };
 
       const result = await agenticWorkflow(
         aiService,

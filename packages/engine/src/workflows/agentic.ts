@@ -1,4 +1,4 @@
-import { agenticProcess, type AgenticWorkflowContext, type AgenticWorkflowOptions, type ToolSpec, type DriverSet } from '@modular-prompt/process';
+import { agenticProcess, type AgenticWorkflowOptions, type ToolSpec, type DriverSet } from '@modular-prompt/process';
 import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
 import type { AIService } from '@modular-prompt/driver';
@@ -23,21 +23,13 @@ function toToolSpecs(tools: EngineTool[]): ToolSpec[] {
 /**
  * Agentic workflow - uses @modular-prompt/process agenticProcess
  *
- * Receives a PromptModule with AgenticWorkflowContext.
+ * Receives a PromptModule with a user-defined context type T.
  * Tools are passed as ToolSpec[] and returned as pendingToolCalls.
- *
- * @param aiService - AI service for driver selection
- * @param module - PromptModule for the agentic workflow
- * @param context - AgenticWorkflowContext with objective, taskList, etc.
- * @param tools - Available tools (returned as pendingToolCalls)
- * @param logger - Request logger
- * @param options - Workflow options
- * @returns WorkflowResult (text or tool_calls response)
  */
-export async function agenticWorkflow(
+export async function agenticWorkflow<T>(
   aiService: AIService,
-  module: PromptModule<AgenticWorkflowContext>,
-  context: AgenticWorkflowContext,
+  module: PromptModule<T>,
+  context: T,
   tools: EngineTool[],
   logger: EngineLogger,
   _options: WorkflowOptions,

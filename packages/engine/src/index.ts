@@ -2,7 +2,7 @@
 export { process } from './workflows/index.js';
 export { passthroughWorkflow } from './workflows/passthrough.js';
 export { agenticWorkflow } from './workflows/agentic.js';
-export type { AgenticWorkflowContext, AgenticTask } from '@modular-prompt/process';
+export type { AgenticTask } from '@modular-prompt/process';
 export { resolveDriver, clearDriverCache, type ResolvedDriver } from './driver-cache.js';
 
 // 型
