@@ -25,8 +25,8 @@ importers:
         specifier: 0.2.1
         version: 0.2.1
       '@modular-prompt/driver':
-        specifier: 0.10.1
-        version: 0.10.1(ws@8.19.0)(zod@3.25.76)
+        specifier: 0.10.2
+        version: 0.10.2(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils':
         specifier: latest
         version: 0.3.1
@@ -54,7 +54,7 @@ importers:
     devDependencies:
       '@modular-prompt/experiment':
         specifier: ^0.3.6
-        version: 0.3.6(ws@8.19.0)
+        version: 0.3.6(ws@8.20.0)
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -86,11 +86,11 @@ importers:
         specifier: 0.2.1
         version: 0.2.1
       '@modular-prompt/driver':
-        specifier: 0.10.1
-        version: 0.10.1(ws@8.19.0)(zod@3.25.76)
+        specifier: 0.10.2
+        version: 0.10.2(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/process':
         specifier: 0.3.0
-        version: 0.3.0(ws@8.19.0)(zod@3.25.76)
+        version: 0.3.0(ws@8.20.0)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -446,8 +446,21 @@ packages:
     resolution: {integrity: sha512-HqYqoivNtkq59po8m7KI0n+lWKdz4kabENncYQXZCX/hBWJfXtKAfR/2nUQsP+TwSfHKoA7zDL2RrJYIv/j3VQ==}
     engines: {node: '>=18.0.0'}
 
+  '@google-cloud/vertexai@1.10.3':
+    resolution: {integrity: sha512-YcEaYPyUVVRz4adNiR4jQQeq/XSOUwH6SERL7NGdZlCXKY+7BofFQpcd71HgdSkzTgERcVQ3TZquNwXNqlTQXQ==}
+    engines: {node: '>=18.0.0'}
+
   '@google/genai@1.42.0':
     resolution: {integrity: sha512-+3nlMTcrQufbQ8IumGkOphxD5Pd5kKyJOzLcnY0/1IuE8upJk5aLmoexZ2BJhBp1zAjRJMEB4a2CJwKI9e2EYw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.2
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
+  '@google/genai@1.46.0':
+    resolution: {integrity: sha512-ewPMN5JkKfgU5/kdco9ZhXBHDPhVqZpMQqIFQhwsHLf8kyZfx1cNpw1pHo1eV6PGEW7EhIBFi3aYZraFndAXqg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -489,6 +502,9 @@ packages:
 
   '@modular-prompt/driver@0.10.1':
     resolution: {integrity: sha512-FIk6tLKp4L4hxNN3c66914z9N7lLDzzZRJGzUGIcFmLH7XoXXlIUyjXfyyNVqLBkc75uJSOXwkLNVSeIzb6cvw==}
+
+  '@modular-prompt/driver@0.10.2':
+    resolution: {integrity: sha512-oaBnb4gVMuEOcMn2yh0LPosyJ9ytiQRv3Dti+Qs0VJRL/izjOsMTHNMZeSkZhpom0pDErX1ED2daxWoxHF5HHg==}
 
   '@modular-prompt/driver@0.9.3':
     resolution: {integrity: sha512-A33M30ktp7l1A0riwCSa59tciOD4frm5hZdqPFZEadOw3iS0W07xDSg1GRSPJrCVdu01x4vUm5UqrgfVLtXPtw==}
@@ -1098,6 +1114,10 @@ packages:
     resolution: {integrity: sha512-YGGyuEdVIjqxkxVH1pUTMY/XtmmsApXrCVv5EU25iX6inEPbV+VakJfLealkBtJN69AQmh1eGOdCl9Sm1UP6XQ==}
     engines: {node: '>=18'}
 
+  gaxios@7.1.4:
+    resolution: {integrity: sha512-bTIgTsM2bWn3XklZISBTQX7ZSddGW+IO3bMdGaemHZ3tbqExMENHLx6kKZ/KlejgrMtj8q7wBItt51yegqalrA==}
+    engines: {node: '>=18'}
+
   gcp-metadata@6.1.1:
     resolution: {integrity: sha512-a4tiq7E0/5fTjxPAaH4jpjkSv/uCaU2p5KC6HVGrvl0cDjA8iBZv4vv1gyzlmK0ZUKqwpOyQMKzZQe3lTit77A==}
     engines: {node: '>=14'}
@@ -1135,6 +1155,10 @@ packages:
 
   google-auth-library@10.5.0:
     resolution: {integrity: sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w==}
+    engines: {node: '>=18'}
+
+  google-auth-library@10.6.2:
+    resolution: {integrity: sha512-e27Z6EThmVNNvtYASwQxose/G57rkRuaRbQyxM2bvYLLX/GqWZ5chWq2EBoUchJbCc57eC9ArzO5wMsEmWftCw==}
     engines: {node: '>=18'}
 
   google-auth-library@9.15.1:
@@ -1812,6 +1836,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.20.0:
+    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   yaml@2.8.2:
     resolution: {integrity: sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A==}
     engines: {node: '>= 14.6'}
@@ -2038,12 +2074,34 @@ snapshots:
       - encoding
       - supports-color
 
+  '@google-cloud/vertexai@1.10.3':
+    dependencies:
+      '@google/genai': 1.46.0
+      google-auth-library: 9.15.1
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - encoding
+      - supports-color
+      - utf-8-validate
+
   '@google/genai@1.42.0':
     dependencies:
       google-auth-library: 10.5.0
       p-retry: 4.6.2
       protobufjs: 7.5.4
       ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@google/genai@1.46.0':
+    dependencies:
+      google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.5.4
+      ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -2080,7 +2138,7 @@ snapshots:
 
   '@modular-prompt/core@0.2.1': {}
 
-  '@modular-prompt/driver@0.10.1(ws@8.19.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.10.1(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@google-cloud/vertexai': 1.10.0
@@ -2090,7 +2148,7 @@ snapshots:
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
+      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2100,7 +2158,27 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/driver@0.9.3(ws@8.19.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.10.2(ws@8.20.0)(zod@3.25.76)':
+    dependencies:
+      '@anthropic-ai/sdk': 0.61.0
+      '@google-cloud/vertexai': 1.10.3
+      '@google/genai': 1.46.0
+      '@modular-prompt/core': 0.2.1
+      '@modular-prompt/utils': 0.3.1
+      '@types/js-yaml': 4.0.9
+      google-auth-library: 9.15.1
+      js-yaml: 4.1.1
+      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
+
+  '@modular-prompt/driver@0.9.3(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@google-cloud/vertexai': 1.10.0
@@ -2110,7 +2188,7 @@ snapshots:
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
+      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2120,11 +2198,11 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/experiment@0.3.6(ws@8.19.0)':
+  '@modular-prompt/experiment@0.3.6(ws@8.20.0)':
     dependencies:
       '@modular-prompt/core': 0.1.13
-      '@modular-prompt/driver': 0.9.3(ws@8.19.0)(zod@3.25.76)
-      '@modular-prompt/process': 0.1.28(ws@8.19.0)(zod@3.25.76)
+      '@modular-prompt/driver': 0.9.3(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/process': 0.1.28(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils': 0.2.4
       commander: 12.1.0
       jiti: 2.6.1
@@ -2138,10 +2216,10 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@modular-prompt/process@0.1.28(ws@8.19.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.1.28(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@modular-prompt/core': 0.1.13
-      '@modular-prompt/driver': 0.9.3(ws@8.19.0)(zod@3.25.76)
+      '@modular-prompt/driver': 0.9.3(ws@8.20.0)(zod@3.25.76)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2151,10 +2229,10 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/process@0.3.0(ws@8.19.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.3.0(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@modular-prompt/core': 0.2.1
-      '@modular-prompt/driver': 0.10.1(ws@8.19.0)(zod@3.25.76)
+      '@modular-prompt/driver': 0.10.1(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils': 0.3.1
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
@@ -2831,6 +2909,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  gaxios@7.1.4:
+    dependencies:
+      extend: 3.0.2
+      https-proxy-agent: 7.0.6
+      node-fetch: 3.3.2
+    transitivePeerDependencies:
+      - supports-color
+
   gcp-metadata@6.1.1:
     dependencies:
       gaxios: 6.7.1
@@ -2890,6 +2976,17 @@ snapshots:
       gcp-metadata: 8.1.2
       google-logging-utils: 1.1.3
       gtoken: 8.0.0
+      jws: 4.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  google-auth-library@10.6.2:
+    dependencies:
+      base64-js: 1.5.1
+      ecdsa-sig-formatter: 1.0.11
+      gaxios: 7.1.4
+      gcp-metadata: 8.1.2
+      google-logging-utils: 1.1.3
       jws: 4.0.1
     transitivePeerDependencies:
       - supports-color
@@ -3113,9 +3210,9 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
-  openai@5.23.2(ws@8.19.0)(zod@3.25.76):
+  openai@5.23.2(ws@8.20.0)(zod@3.25.76):
     optionalDependencies:
-      ws: 8.19.0
+      ws: 8.20.0
       zod: 3.25.76
 
   optionator@0.9.4:
@@ -3521,6 +3618,8 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.19.0: {}
+
+  ws@8.20.0: {}
 
   yaml@2.8.2: {}
 
