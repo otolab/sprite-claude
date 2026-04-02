@@ -73,8 +73,16 @@ def cmd_launch(args):
         # Launch claude command with any additional arguments
         import subprocess
         try:
-            # Pass through any additional arguments to claude command
-            claude_args = ['claude']
+            # Launch in --bare mode with .sprite-claude resources
+            claude_args = ['claude', '--bare']
+
+            # Restore settings and plugins from .sprite-claude
+            settings_path = Path(claude_config_dir) / 'settings.json'
+            if settings_path.exists():
+                claude_args.extend(['--settings', str(settings_path)])
+            plugins_path = Path(claude_config_dir) / 'plugins'
+            if plugins_path.exists():
+                claude_args.extend(['--plugin-dir', str(plugins_path)])
 
             # Add --disallowedTools from config
             if disallowed_tools:

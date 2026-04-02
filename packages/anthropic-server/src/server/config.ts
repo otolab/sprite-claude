@@ -2,6 +2,18 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import yaml from 'js-yaml';
 import type { ModelSpec, SelectionOptions } from '@modular-prompt/driver';
+import type { WorkflowDefinition } from '@sprite-claude/engine';
+
+/**
+ * Prompt module definition in YAML format
+ */
+export interface PromptModuleDefinition {
+  objective?: Array<string | Record<string, unknown>>;
+  persona?: Array<string | Record<string, unknown>>;
+  instructions?: Array<string | Record<string, unknown>>;
+  materials?: Array<string | Record<string, unknown>>;
+  terms?: Array<string | Record<string, unknown>>;
+}
 
 /**
  * Server configuration from config.yaml
@@ -39,16 +51,14 @@ export interface ServerConfig {
     level?: string;
     request_response_level?: string;
   };
-  prompt?: {
-    additional_instructions?: string;
-  };
+  prompts?: Record<string, Array<string | PromptModuleDefinition>>;
   runtime?: {
     pid_dir?: string;
     log_dir?: string;
   };
-  workflow?: {
-    mode?: string;
-  };
+  workflows?: Record<string, WorkflowDefinition>;
+  modelMapping?: Record<string, string>;
+  routingWorkflow?: string;
 }
 
 /**

@@ -158,26 +158,88 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
   - `lenient`: 条件を満たすモデルがない場合は緩和
   - `requiredCapabilities`: 常に必要な能力のリスト
 
+#### プロンプトカスタマイズ設定
+
+- `prompts`: プロンプトモジュールの配列（オプショナル）
+  - **文字列要素**: YAMLファイルパス（`~/.sprite-claude/`からの相対パス）
+  - **オブジェクト要素**: インラインのPromptModule定義
+
+**仕様:**
+- デフォルトのシステムプロンプト（`~/.sprite-claude/prompts/system.yaml`または`default-system.yaml`）はベースとして常に読み込まれる
+- `prompts`で指定したモジュールは`merge()`でデフォルトに統合される
+- 複数のPromptModuleを指定した場合、配列の順序でマージされる
+
+**PromptModuleの構造:**
+- `objective`: 目的・役割の定義
+- `persona`: ペルソナの定義
+- `instructions`: 指示・制約
+- `materials`: 参考資料
+- `terms`: 用語定義
+
+詳細は [otolab/modular-prompt](https://github.com/otolab/modular-prompt) を参照してください。
+
+**設定例:**
+```yaml
+prompts:
+  - "prompts/base.yaml"
+  - objective:
+      - "You are a helpful AI assistant"
+    instructions:
+      - "Respond in Japanese"
+      - "Be concise and clear"
+```
+
 ### モデル選択の仕組み
 
-Claude Codeはリクエストに`claude-sonnet-4-20250514`等のモデル名を指定しますが、このサーバーでは**リクエストのモデル名は選択に使用されません**。レスポンスでそのまま返されるだけです。
+このサーバーでは、リクエストのモデル名（`claude-sonnet-4-20250514`等）を使って**ワークフロー**を選択し、ワークフロー内の役割（`default`、`chat`、`plan`等）ごとに使用するモデルを決定します。
 
-実際のモデル選択は以下の流れで行われます：
+#### ワークフロー選択の流れ
 
-1. **リクエスト内容からcapabilityを判定** — ツール呼び出しがあれば`tools`を要求capabilityに追加
-2. **`models`からcapabilityでフィルタリング** — 要求を満たすモデルだけに絞り込み
-3. **`selection`の優先順位でソート** — `preferLocal`、`preferFast`、`priority`の順で評価
-4. **最上位のモデルを使用**
+1. **リクエスト種別の判定** — `system-reminder`の有無で通常リクエストとルーティングリクエストを判別
+2. **ワークフローの決定**
+   - ルーティングリクエストの場合: `routingWorkflow`で指定されたワークフローを使用
+   - 通常リクエストの場合: `modelMapping`で`request.model`をワークフロー名にマッピング（見つからなければ`default`）
+3. **ワークフロー定義からモデル解決**
+   - `workflows[name].mode`: 実行モード（`agentic`/`passthrough`）
+   - `workflows[name].models`: 役割ごとのモデル指定
+     - 文字列: モデル名を直接指定（例: `"gemini-2.5-flash"`）
+     - 配列: capabilities配列で選択（例: `[fast, japanese]`）
 
-`lenient: true`の場合、条件を満たすモデルがなければ要求capabilityを段階的に緩和して再選択します。
+#### 設定例
 
-#### 例：ツールありリクエスト
+```yaml
+# ワークフロー定義
+workflows:
+  default:
+    mode: agentic
+    models:
+      default: "gemini-2.5-flash"    # モデル名で指定
+      chat: [fast, japanese]          # capabilities配列で指定
+  routing:
+    mode: passthrough
+    models:
+      default: [structured]
 
-Claude Codeが`tools`付きリクエストを送信した場合：
+# request.model → ワークフロー名のマッピング
+modelMapping:
+  claude-3-5-sonnet-20241022: default
 
-- `capabilities`に`tools`を持つモデルのみが候補になる
-- MLXモデルが`tools`を持たない場合、Vertex AI等のモデルが自動選択される
-- レスポンスの`model`フィールドにはリクエスト時のモデル名（`claude-sonnet-4-20250514`等）がそのまま返る
+# ルーティングリクエスト用ワークフロー
+routingWorkflow: routing
+```
+
+#### モデル解決の詳細
+
+各役割に指定されたモデルは以下のように解決されます:
+
+- **文字列の場合**: `models`配列から同じ名前のモデルを検索
+- **配列の場合**: `AIService.selectModels()`でcapabilitiesを満たすモデルを選択
+  - `selection`設定（`preferLocal`、`preferFast`、`priority`）に従ってソート
+  - `lenient: true`の場合、条件を満たすモデルがなければ要求を段階的に緩和
+
+モデルが見つからない場合は、`default`役割のモデルがフォールバックとして使用されます。
+
+レスポンスの`model`フィールドにはリクエスト時のモデル名（`claude-sonnet-4-20250514`等）がそのまま返されます。
 
 ## 使い方
 

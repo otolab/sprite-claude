@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@modular-prompt/core": "0.2.1",
-    "@modular-prompt/driver": "0.10.2",
+    "@modular-prompt/driver": "0.10.5",
     "@modular-prompt/utils": "latest",
     "@sprite-claude/engine": "workspace:*",
     "commander": "^12.1.0",

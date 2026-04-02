@@ -37,6 +37,8 @@ export interface WorkflowOptions {
     phase2Tool?: number;
     phase2Response?: number;
   };
+  /** ログ出力用のデフォルトモデル名（runner.tsが設定） */
+  modelName?: string;
 }
 
 export interface EngineLogger {
@@ -44,4 +46,9 @@ export interface EngineLogger {
   logLlmResponse(phase: string, data: QueryResult, model?: string): void;
   logError(phase: string, message: string, data?: unknown): void;
   logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
+}
+
+export interface WorkflowDefinition {
+  mode: WorkflowMode;
+  models?: Record<string, string | string[]>;
 }

@@ -124,6 +124,8 @@ sprite-claude/
 ### アーキテクチャ (`docs/architecture/`)
 - **[layers.md](docs/architecture/layers.md)** - 層の責任分担（プロセス管理層とサーバーロジック層）
 - **[logging.md](docs/architecture/logging.md)** - ログシステムとextract-log.ts
+- **[agentic-workflow.md](docs/architecture/agentic-workflow.md)** - Agenticワークフローモードの概要と外部インターフェース
+- **[agentic-process-flow.md](docs/architecture/agentic-process-flow.md)** - agenticProcessの内部処理フロー（@modular-prompt/process 0.3.4）
 
 ## クイックリファレンス
 

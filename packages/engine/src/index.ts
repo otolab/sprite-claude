@@ -2,6 +2,7 @@
 export { process } from './workflows/index.js';
 export { passthroughWorkflow } from './workflows/passthrough.js';
 export { agenticWorkflow } from './workflows/agentic.js';
+export { runWorkflow } from './workflows/runner.js';
 export type { AgenticTask } from '@modular-prompt/process';
 export { resolveDriver, clearDriverCache, type ResolvedDriver } from './driver-cache.js';
 
@@ -10,6 +11,7 @@ export type {
   WorkflowResult,
   WorkflowMode,
   WorkflowOptions,
+  WorkflowDefinition,
   EngineMessage,
   EngineTool,
   EngineLogger,

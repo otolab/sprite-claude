@@ -60,7 +60,7 @@ engine 層の `agenticWorkflow` 関数を呼び出します:
 
 ```typescript
 const result = await agenticWorkflow(
-  aiService,
+  driverInput,  // AIDriver | DriverSet
   module,
   context,
   request.tools || [],
@@ -69,11 +69,15 @@ const result = await agenticWorkflow(
 );
 ```
 
+**引数の変更**（@modular-prompt/process 0.3.x 対応）:
+- 第1引数が `aiService: AIService` から `driverInput: DriverInput` に変更
+- `DriverInput` = `AIDriver | DriverSet`（@modular-prompt/processの型）
+- DriverSetを渡すことで、役割ごとに異なるモデルを使用可能
+
 内部では以下を実行:
-1. AIDriver の解決 (`resolveDriver`)
-2. `EngineTool[]` → `ToolSpec[]` への変換 (`toToolSpecs`)
-3. `agenticProcess` の実行（`enablePlanning: false`）
-4. `result.context.executionLog` から `pendingToolCalls` をチェック
+1. `EngineTool[]` → `ToolSpec[]` への変換 (`toToolSpecs`)
+2. `agenticProcess` の実行（`enablePlanning: true`）
+3. `result.context.executionLog` から `pendingToolCalls` をチェック
 
 ### 5. 結果変換
 
@@ -183,16 +187,57 @@ Anthropic 形式のメッセージを `convertToElements` で変換する際:
 | `packages/engine/src/index.ts` | `agenticWorkflow`, `AgenticWorkflowContext`, `AgenticTask` エクスポート |
 | `packages/anthropic-server/src/messages/index.ts` | `convertToElements` ヘルパー抽出、agentic 分岐追加（L232-272） |
 
+## 新しいエントリーポイント: runWorkflow()
+
+@modular-prompt/process 0.3.x 以降、`runWorkflow()` が統合エントリーポイントとして導入されました:
+
+**実装**: `packages/engine/src/workflows/runner.ts`
+
+```typescript
+export async function runWorkflow<T>(
+  def: WorkflowDefinition,
+  aiService: AIService,
+  module: PromptModule<T>,
+  context: T,
+  tools: EngineTool[],
+  logger: EngineLogger,
+  options: WorkflowOptions,
+): Promise<WorkflowResult>
+```
+
+**機能**:
+1. **WorkflowDefinitionからモデル解決**
+   - `def.models`の各役割（`default`、`chat`、`plan`等）を`ModelSpec`に解決
+   - 文字列（モデル名）または配列（capabilities）をサポート
+2. **ドライバー構築**
+   - agenticモード: DriverSetを構築（役割ごとのドライバー）
+   - passthroughモード: 単一のAIDriverを構築
+3. **ワークフロー実行**
+   - `def.mode`に応じて`agenticWorkflow`または`passthroughWorkflow`を呼び出し
+
 ## 設定例
 
 `config.yaml`:
 
 ```yaml
-workflow:
-  mode: agentic
+workflows:
+  default:
+    mode: agentic
+    models:
+      default: "gemini-2.5-flash"
+      chat: [fast, japanese]
+  routing:
+    mode: passthrough
+    models:
+      default: [structured]
+
+modelMapping:
+  claude-3-5-sonnet-20241022: default
+
+routingWorkflow: routing
 ```
 
-これにより、全てのツール付きリクエストが agentic モードで処理されます。
+これにより、`request.model`に応じて適切なワークフローが選択され、役割ごとに最適なモデルが使用されます。
 
 ## 今後の拡張可能性
 

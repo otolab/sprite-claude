@@ -126,14 +126,16 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
       const response = await handleMessages(
         validationResult.data,
         aiService,
-        options.prompt?.additionalInstructions,
+        options.prompts,
         options.maxTokens,
         pid,
         reqId,
         requestResponseLevel,
-        undefined, // toolProcessType
-        options.workflow,
+        options.workflows,
+        options.modelMapping,
+        options.routingWorkflow,
         serverLogger,
+        options.configDir,
       );
 
       return response;

@@ -71,11 +71,14 @@ describe('Driver Cache', () => {
     });
 
     expect(response1.statusCode).toBe(200);
-    expect(mockSelectModels).toHaveBeenCalledTimes(1);
-    expect(mockCreateDriver).toHaveBeenCalledTimes(1); // Driver created
-    expect(mockDriverQuery).toHaveBeenCalledTimes(1);
+    // agenticワークフローは4役割(default, chat, reasoning, structured)のドライバーを解決
+    // agenticProcessは内部で複数回queryを呼ぶ(planning + output)
+    const firstCreateCount = mockCreateDriver.mock.calls.length;
+    const firstQueryCount = mockDriverQuery.mock.calls.length;
+    expect(firstCreateCount).toBeGreaterThanOrEqual(1);
+    expect(firstQueryCount).toBeGreaterThanOrEqual(1);
 
-    // Second request
+    // Second request — キャッシュにヒットするのでcreateDriverは増えない
     const response2 = await server.inject({
       method: 'POST',
       url: '/v1/messages',
@@ -83,9 +86,8 @@ describe('Driver Cache', () => {
     });
 
     expect(response2.statusCode).toBe(200);
-    expect(mockSelectModels).toHaveBeenCalledTimes(2); // Model selection called again
-    expect(mockCreateDriver).toHaveBeenCalledTimes(1); // Driver NOT created again (cached)
-    expect(mockDriverQuery).toHaveBeenCalledTimes(2); // Query called on same driver instance
+    expect(mockCreateDriver).toHaveBeenCalledTimes(firstCreateCount); // Driver NOT created again (cached)
+    expect(mockDriverQuery).toHaveBeenCalledTimes(firstQueryCount * 2); // Same query pattern repeated
 
     // Third request
     const response3 = await server.inject({
@@ -95,8 +97,7 @@ describe('Driver Cache', () => {
     });
 
     expect(response3.statusCode).toBe(200);
-    expect(mockSelectModels).toHaveBeenCalledTimes(3);
-    expect(mockCreateDriver).toHaveBeenCalledTimes(1); // Still only created once
-    expect(mockDriverQuery).toHaveBeenCalledTimes(3);
+    expect(mockCreateDriver).toHaveBeenCalledTimes(firstCreateCount); // Still cached
+    expect(mockDriverQuery).toHaveBeenCalledTimes(firstQueryCount * 3);
   });
 });
