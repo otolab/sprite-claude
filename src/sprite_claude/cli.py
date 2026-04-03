@@ -73,8 +73,7 @@ def cmd_launch(args):
         # Launch claude command with any additional arguments
         import subprocess
         try:
-            # Launch in --bare mode with .sprite-claude resources
-            claude_args = ['claude', '--bare']
+            claude_args = ['claude']
 
             # Restore settings and plugins from .sprite-claude
             settings_path = Path(claude_config_dir) / 'settings.json'
