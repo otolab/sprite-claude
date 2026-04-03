@@ -43,7 +43,7 @@ function resolveModelOverrides(
 async function buildDriverSet(
   aiService: AIService,
   overrides: Record<string, ModelSpec>,
-): Promise<{ driverSet: DriverSet; defaultModel: string }> {
+): Promise<{ driverSet: DriverSet; defaultModel: string; modelNames: Record<string, string> }> {
   const [defaultR, chatR, reasoningR, structuredR] = await Promise.all([
     resolveDriver(aiService, [], { preferLocal: true, lenient: true }, overrides.default),
     resolveDriver(aiService, ['chat'], { preferLocal: true, preferFast: true, lenient: false }, overrides.chat),
@@ -60,6 +60,13 @@ async function buildDriverSet(
       thinking: reasoningR?.driver || defaultR.driver,
     },
     defaultModel: defaultR.model,
+    modelNames: {
+      default: defaultR.model,
+      chat: chatR?.model || defaultR.model,
+      plan: reasoningR?.model || defaultR.model,
+      instruct: structuredR?.model || defaultR.model,
+      thinking: reasoningR?.model || defaultR.model,
+    },
   };
 }
 
@@ -84,13 +91,19 @@ export async function runWorkflow<T>(
   if (def.mode === 'passthrough') {
     const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true }, overrides.default);
     if (!resolved) throw new Error('No suitable model found for passthrough.');
+    if (logger.logDriverInfo) {
+      logger.logDriverInfo(options.workflowName || 'passthrough', resolved.model, {});
+    }
     const compiled = compile(module, context);
     return passthroughWorkflow(resolved.driver, compiled, tools, logger,
       { ...options, modelName: resolved.model });
   }
 
   if (def.mode === 'agentic') {
-    const { driverSet, defaultModel } = await buildDriverSet(aiService, overrides);
+    const { driverSet, defaultModel, modelNames } = await buildDriverSet(aiService, overrides);
+    if (logger.logDriverInfo) {
+      logger.logDriverInfo(options.workflowName || 'agentic', defaultModel, { models: modelNames });
+    }
     return agenticWorkflow(driverSet, module, context, tools, logger,
       { ...options, modelName: defaultModel });
   }

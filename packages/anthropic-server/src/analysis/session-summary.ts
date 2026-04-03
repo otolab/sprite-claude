@@ -96,9 +96,9 @@ export function extractSessionSummary(sessionFiles: string[]): SessionMessage[] 
     const stopReason = responseEntry?.data?.stop_reason || '?';
     const toolNames = responseEntry ? extractToolNames(responseEntry.data) : [];
 
-    // Find model from LLM response
-    const llmResponse = entries.find(e => e.type === 'llm_response');
-    const model = llmResponse?.data?.model;
+    // driver_info エントリからワークフロー名を取得
+    const driverInfoEntry = entries.find(e => e.type === 'driver_info');
+    const workflowName = driverInfoEntry?.phase || undefined;  // phaseにworkflow名が入っている
 
     // Check for errors
     const errorEntry = entries.find(e => e.type === 'error');
@@ -112,7 +112,7 @@ export function extractSessionSummary(sessionFiles: string[]): SessionMessage[] 
       toolCount,
       messageCount,
       stopReason,
-      model,
+      workflowName,
       userMessage: userMessage.substring(0, 80) + (userMessage.length > 80 ? '...' : ''),
       toolNames: toolNames.length > 0 ? toolNames : undefined,
       error,
@@ -170,7 +170,7 @@ export function displaySessionSummary(summary: SessionMessage[], sessionId: numb
   console.log(`\nSession: PID ${sessionId} (${summary.length} requests)`);
   console.log(`Path: ~/.sprite-claude/logs/requests/\n`);
 
-  const header = `  Seq   Time      WF        Tools  Msgs  Result                  Model                  Message`;
+  const header = `  Seq   Time      WF        Tools  Msgs  Result                  Workflow               Message`;
   console.log(header);
   console.log('  ' + '-'.repeat(header.length - 2));
 
@@ -180,11 +180,11 @@ export function displaySessionSummary(summary: SessionMessage[], sessionId: numb
     const tools = String(msg.toolCount).padStart(3);
     const msgs = String(msg.messageCount).padStart(3);
     const result = fmtResult(msg).padEnd(22).substring(0, 22);
-    const model = (msg.model || '-').padEnd(22).substring(0, 22);
+    const workflow = (msg.workflowName || '-').padEnd(22).substring(0, 22);
     const userMsg = msg.userMessage.substring(0, 40);
     const warn = msg.error ? ' !' : '';
 
-    console.log(`  ${msg.seqId}  ${time}  ${wf}  ${tools}   ${msgs}  ${result}  ${model}  ${userMsg}${warn}`);
+    console.log(`  ${msg.seqId}  ${time}  ${wf}  ${tools}   ${msgs}  ${result}  ${workflow}  ${userMsg}${warn}`);
 
     if (msg.error) {
       console.log(`        -> ${msg.error}`);

@@ -255,19 +255,19 @@ export async function handleMessages(
     workflows?: Record<string, WorkflowDefinition>,
     modelMapping?: Record<string, string>,
     routingWfKey?: string,
-  ): WorkflowDefinition {
+  ): { def: WorkflowDefinition; name: string } {
     if (isRouting && routingWfKey && workflows?.[routingWfKey]) {
-      return workflows[routingWfKey];
+      return { def: workflows[routingWfKey], name: routingWfKey };
     }
     const name = modelMapping?.[requestModel] || 'default';
-    return workflows?.[name] || { mode: 'agentic' };
+    return { def: workflows?.[name] || { mode: 'agentic' }, name };
   }
 
   // Determine workflow mode and process
   let content: ContentBlock[];
 
   const isRouting = !hasSystemReminder(request.messages);
-  const wfDef = resolveWorkflowDef(request.model, isRouting, workflows, modelMapping, routingWorkflowKey);
+  const { def: wfDef, name: wfName } = resolveWorkflowDef(request.model, isRouting, workflows, modelMapping, routingWorkflowKey);
 
   if (isRouting) {
     // ルーティングリクエスト（system-reminderなし）
@@ -291,7 +291,7 @@ export async function handleMessages(
     };
 
     const result = await runWorkflow(wfDef, aiService, module, {}, [], engineLogger,
-      { mode: wfDef.mode, maxTokens: maxTokensConfig });
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
 
     content = [{
       type: 'text',
@@ -328,7 +328,7 @@ export async function handleMessages(
 
     const result = await runWorkflow(wfDef, aiService, module, context,
       request.tools || [], engineLogger,
-      { mode: wfDef.mode, maxTokens: maxTokensConfig });
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
     content = toContentBlocks(result);
   }
 

@@ -12,8 +12,8 @@ export interface LogEntry {
   timestamp: string;
   pid: number;
   seqId: string;
-  phase: 'request' | 'response' | 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough' | 'agentic';
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error';
+  phase: string;
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';
   // Note: data can be MessagesRequest, MessagesResponse, prompt string, LLM response, etc.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
@@ -210,6 +210,26 @@ export class RequestLogger {
       data: { message, ...(data || {}) },
     });
   }
+
+  /**
+   * Log driver/model selection info
+   */
+  logDriverInfo(
+    phase: string,
+    model: string,
+    capabilities: unknown,
+  ): void {
+    if (this.level === 'none') return;
+
+    this.appendLog({
+      timestamp: new Date().toISOString(),
+      pid: this.pid,
+      seqId: this.seqId,
+      phase,
+      type: 'driver_info',
+      data: { model, ...(capabilities as Record<string, unknown> || {}) },
+    });
+  }
 }
 
 /**
@@ -250,8 +270,9 @@ export function toEngineLogger(requestLogger: RequestLogger, serverLogger?: Serv
     logError(phase, message, data) {
       requestLogger.logError(phase as any, message, data);
     },
-    logDriverInfo(_phase, model, capabilities) {
+    logDriverInfo(phase, model, capabilities) {
       serverLogger?.info('driver', `Model capabilities: ${model}`, capabilities);
+      requestLogger.logDriverInfo(phase, model, capabilities);
     },
   };
 }

@@ -35,6 +35,8 @@ export interface WorkflowOptions {
     phase2Tool?: number;
     phase2Response?: number;
   };
+  /** ワークフロー定義名（config.yamlのworkflows.xxxのキー名） */
+  workflowName?: string;
   /** ログ出力用のデフォルトモデル名（runner.tsが設定） */
   modelName?: string;
 }

@@ -61,8 +61,8 @@ export interface LogEntry {
   timestamp: string;
   pid: number;
   seqId: string;
-  phase: Phase;
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error';
+  phase: string;
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';
   data: any;
 }
 
@@ -89,7 +89,7 @@ export interface SessionMessage {
   toolCount: number;
   messageCount: number;
   stopReason: string;
-  model?: string;
+  workflowName?: string;
   userMessage: string;
   toolNames?: string[];
   error?: string;
@@ -105,7 +105,7 @@ export interface SessionMessage {
  * Extracted phase data
  */
 export interface PhaseData {
-  phase: Phase;
+  phase: string;
   prompt?: string;
   output?: any;
 }

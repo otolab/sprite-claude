@@ -3,7 +3,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import type { LogEntry, PhaseData, Phase, WorkflowType } from './types.js';
+import type { LogEntry, PhaseData, WorkflowType } from './types.js';
 import { PHASES } from './types.js';
 
 /**
@@ -50,7 +50,7 @@ export function findMessageEntry(entries: LogEntry[], query: string | null): Log
  * Extract all phase data for a specific seqId
  */
 export function extractAllPhaseData(entries: LogEntry[], seqId: string): PhaseData[] {
-  const phaseDataMap = new Map<Phase, PhaseData>();
+  const phaseDataMap = new Map<string, PhaseData>();
 
   for (const entry of entries) {
     if (entry.seqId !== seqId) continue;
@@ -76,7 +76,7 @@ export function extractAllPhaseData(entries: LogEntry[], seqId: string): PhaseDa
 /**
  * Filter phase data by phase names
  */
-export function filterPhaseData(allPhaseData: PhaseData[], phases?: Phase[]): PhaseData[] {
+export function filterPhaseData(allPhaseData: PhaseData[], phases?: string[]): PhaseData[] {
   if (!phases || phases.length === 0) {
     return allPhaseData;
   }
@@ -248,6 +248,14 @@ export function inspectRequest(entries: LogEntry[], seqId: string, filePath?: st
       details.push(`blocks=[${types.join(', ')}]`);
     } else if (entry.type === 'error') {
       details.push(entry.data.message || '?');
+    } else if (entry.type === 'driver_info') {
+      details.push(`model=${entry.data.model || '?'}`);
+      if (entry.data.models) {
+        const roles = Object.entries(entry.data.models)
+          .map(([role, model]) => `${role}=${model}`)
+          .join(', ');
+        details.push(`roles={${roles}}`);
+      }
     }
 
     console.log(`    ${lineNum.padEnd(4)} ${tag.padEnd(30)} ${details.join('  ')}`);
