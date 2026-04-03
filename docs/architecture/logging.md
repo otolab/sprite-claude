@@ -47,25 +47,34 @@ interface LogEntry {
   timestamp: string;   // ISO 8601
   pid: number;         // プロセスID
   seqId: string;       // リクエスト連番 (例: "0021")
-  phase: string;       // フェーズ識別子
-  type: string;        // エントリタイプ
+  phase: string;       // ワークフロー定義名（config.yamlのworkflows.xxxのキー名、例: "default", "routing"）
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';  // エントリタイプ
   data: any;           // フェーズ固有のデータ
-  model?: string;      // llm_response エントリで記録される、実際に使用されたモデル名
 }
 ```
 
+**注**: 以前の実装では `phase` は固定のユニオン型でしたが、現在はワークフロー定義名を受け入れる `string` 型です。
+
 ### フェーズとタイプ
 
-#### リクエスト/レスポンス
+#### 共通エントリ
 
 | Phase | Type | 説明 |
 |-------|------|------|
 | `request` | `in` | クライアントからのリクエスト |
 | `response` | `out` | クライアントへのレスポンス |
+| ワークフロー定義名 | `driver_info` | ワークフロー実行前に記録されるドライバー情報（モデル構成） |
 
-#### RAG ワークフロー
+**driver_info エントリ**: ワークフロー実行前に記録され、使用されるモデル構成を含みます。
+- **passthrough の場合**: `{ model: "モデル名" }`
+- **agentic の場合**: `{ model: "デフォルトモデル名", models: { default: "...", chat: "...", plan: "...", instruct: "...", thinking: "..." } }`
+- `phase` フィールドにはワークフロー定義名（例: "default", "routing"）が入ります
 
-| Phase | Type | 説明 |
+#### RAG ワークフロー（mode: 'rag'）
+
+**注**: Phase列にはワークフロー定義名が入ります。以下は旧実装での固定値です。
+
+| Phase（旧） | Type | 説明 |
 |-------|------|------|
 | `phase1-analysis` | `prompt` | Phase1 入力プロンプト |
 | `phase1-analysis` | `llm_response` | Phase1 LLM応答（分析結果） |
@@ -76,35 +85,43 @@ interface LogEntry {
 | `phase2-response-generation` | `prompt` | Phase2 応答生成プロンプト |
 | `phase2-response-generation` | `llm_response` | Phase2 応答生成 LLM応答 |
 
-#### Decision ワークフロー
+#### Decision ワークフロー（mode: 'decision'）
 
-| Phase | Type | 説明 |
+**注**: Phase列にはワークフロー定義名が入ります。以下は旧実装での固定値です。
+
+| Phase（旧） | Type | 説明 |
 |-------|------|------|
 | `phase1-decision` | `prompt` / `llm_response` | Phase1 判定 |
 | `phase2-tool-call` | `prompt` / `llm_response` / `error` | Phase2 ツール呼び出し |
 
-#### Chat ワークフロー
+#### Chat ワークフロー（mode: 'chat'）
 
-| Phase | Type | 説明 |
+**注**: Phase列にはワークフロー定義名が入ります。以下は旧実装での固定値です。
+
+| Phase（旧） | Type | 説明 |
 |-------|------|------|
 | `chat` | `prompt` | プロンプト |
 | `chat` | `llm_response` | LLM応答 |
 
-#### Agentic ワークフロー
+#### Agentic ワークフロー（mode: 'agentic'）
 
-| Phase | Type | 説明 | 記録されるフィールド |
-|-------|------|------|---------------------|
-| `agentic` | `prompt` | プロンプト（agenticProcess への入力） | `toolCount` |
-| `agentic` | `llm_response` | LLM応答（agenticProcess の最終結果） | `model`（実際に使用されたモデル名） |
-| `agentic` | `error` | agenticProcess 実行時のエラー | `stack` |
+| Type | 説明 | 記録されるフィールド |
+|------|------|---------------------|
+| `prompt` | プロンプト（agenticProcess への入力） | `toolCount` |
+| `llm_response` | LLM応答（agenticProcess の最終結果） | `model`（実際に使用されたモデル名） |
+| `error` | agenticProcess 実行時のエラー | `stack` |
 
-#### Passthrough ワークフロー
+**注**: `phase` フィールドにはワークフロー定義名（例: "default"）が入ります。
 
-| Phase | Type | 説明 | 記録されるフィールド |
-|-------|------|------|---------------------|
-| `passthrough` | `prompt` | プロンプト（request.system をシステムプロンプトとして使用） | `toolCount` |
-| `passthrough` | `llm_response` | LLM応答 | `model`（実際に使用されたモデル名） |
-| `passthrough` | `error` | driver.query 実行時のエラー | `stack` |
+#### Passthrough ワークフロー（mode: 'passthrough'）
+
+| Type | 説明 | 記録されるフィールド |
+|------|------|---------------------|
+| `prompt` | プロンプト（request.system をシステムプロンプトとして使用） | `toolCount` |
+| `llm_response` | LLM応答 | `model`（実際に使用されたモデル名） |
+| `error` | driver.query 実行時のエラー | `stack` |
+
+**注**: `phase` フィールドにはワークフロー定義名（例: "routing"）が入ります。
 
 ## サーバーログ
 
@@ -169,15 +186,15 @@ interface ServerLogEntry {
 ### セッションサマリー表示例
 
 ```
-SeqID | Timestamp | P1      | P2      | Model          | Tool                          | User Message
-========================================================================================================
-0001 | 06:46:11 | ✓T      | ✓       | Llama-3.2-3B   | mcp__coeiro-operator__say     | こんばんは
-0002 | 06:46:30 | ✓R      | -       | LFM2.5-1.2B    | passthrough                   | ありがとう
+SeqID | Timestamp | P1      | P2      | Workflow       | Tool                          | User Message
+==========================================================================================================
+0001 | 06:46:11 | ✓T      | ✓       | default        | mcp__coeiro-operator__say     | こんばんは
+0002 | 06:46:30 | ✓R      | -       | routing        | passthrough                   | ありがとう
 ```
 
 - P1: Phase1 / 単一フェーズのステータス（✓=成功, ✗=失敗, -=なし, T=tool, R=response）
 - P2: Phase2 ステータス（✓=成功, ✗=失敗, -=なし）
-- Model: 実際に使用されたモデル名（ログに記録されている場合のみ表示）
+- Workflow: ワークフロー定義名（driver_infoエントリのphaseフィールドから取得、なければ`-`）
 - passthrough/chat ワークフローでは P1 に結果、P2 は `-`
 
 ### inspect コマンド表示例
@@ -193,10 +210,13 @@ Messages: 1
 
 Entries:
   request/in                          | model=claude-3-5-sonnet-20241022 tools=23 messages=1
+  default/driver_info                 | model=LiquidAI/LFM2.5-1.2B-JP-MLX-8bit roles={default=xxx, chat=xxx, ...}
   passthrough/prompt                  | content_length=21163 tool_count=23
   passthrough/llm_response            | model=LiquidAI/LFM2.5-1.2B-JP-MLX-8bit finish=stop content_len=262 toolCalls=0
   response/out                        | stop_reason=end_turn content_blocks=1
 ```
+
+**driver_info エントリ**: ワークフロー実行前に記録され、使用されるモデル構成を表示します。
 
 ### show --meta オプション表示例
 
