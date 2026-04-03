@@ -1,10 +1,81 @@
 import Fastify from 'fastify';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { AIService, type ApplicationConfig } from '@modular-prompt/driver';
-import { MessagesRequestSchema, type MessagesRequest } from '../schema.js';
+import { MessagesRequestSchema, type MessagesRequest, type MessagesResponse } from '../schema.js';
 import { handleMessages } from '../messages/index.js';
 import { createServerLogger } from './logging.js';
 import type { AnthropicServerOptions } from './types.js';
+
+/**
+ * Send a completed MessagesResponse as Anthropic SSE streaming events.
+ * This is pseudo-streaming — the response is fully computed before sending.
+ */
+function sendAsSSE(reply: FastifyReply, response: MessagesResponse): void {
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
+  const write = (event: string, data: unknown) => {
+    reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  // message_start
+  write('message_start', {
+    type: 'message_start',
+    message: {
+      id: response.id,
+      type: 'message',
+      role: 'assistant',
+      content: [],
+      model: response.model,
+      stop_reason: null,
+      usage: { input_tokens: response.usage.input_tokens, output_tokens: 0 },
+    },
+  });
+
+  // content blocks
+  for (let i = 0; i < response.content.length; i++) {
+    const block = response.content[i];
+
+    if (block.type === 'text') {
+      write('content_block_start', {
+        type: 'content_block_start',
+        index: i,
+        content_block: { type: 'text', text: '' },
+      });
+      write('content_block_delta', {
+        type: 'content_block_delta',
+        index: i,
+        delta: { type: 'text_delta', text: block.text },
+      });
+      write('content_block_stop', { type: 'content_block_stop', index: i });
+    } else if (block.type === 'tool_use') {
+      write('content_block_start', {
+        type: 'content_block_start',
+        index: i,
+        content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} },
+      });
+      write('content_block_delta', {
+        type: 'content_block_delta',
+        index: i,
+        delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input) },
+      });
+      write('content_block_stop', { type: 'content_block_stop', index: i });
+    }
+  }
+
+  // message_delta + message_stop
+  write('message_delta', {
+    type: 'message_delta',
+    delta: { stop_reason: response.stop_reason },
+    usage: { output_tokens: response.usage.output_tokens },
+  });
+  write('message_stop', { type: 'message_stop' });
+
+  reply.raw.end();
+}
 
 /**
  * Create Fastify server with Anthropic Messages API endpoint
@@ -137,6 +208,11 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
         serverLogger,
         options.configDir,
       );
+
+      // Pseudo-streaming: wrap completed response as SSE events
+      if (validationResult.data.stream) {
+        return sendAsSSE(reply, response);
+      }
 
       return response;
     } catch (error) {
