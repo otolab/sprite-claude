@@ -10,6 +10,45 @@ import type { PromptModuleDefinition } from '../server/config.js';
 
 export type MaxTokensConfig = AnthropicServerOptions['maxTokens'];
 
+/**
+ * Glob-style pattern matching for model names.
+ * Supports: prefix* | *suffix | *contains* | exact
+ */
+function globMatch(pattern: string, value: string): boolean {
+  const startsWithWild = pattern.startsWith('*');
+  const endsWithWild = pattern.endsWith('*');
+  if (startsWithWild && endsWithWild) {
+    return value.includes(pattern.slice(1, -1));
+  }
+  if (endsWithWild) {
+    return value.startsWith(pattern.slice(0, -1));
+  }
+  if (startsWithWild) {
+    return value.endsWith(pattern.slice(1));
+  }
+  return value === pattern;
+}
+
+/**
+ * Resolve model name to workflow name via modelMapping.
+ * Tries exact match first, then glob patterns.
+ */
+function resolveModelMapping(
+  requestModel: string,
+  modelMapping?: Record<string, string>,
+): string {
+  if (!modelMapping) return 'default';
+  // Exact match first
+  if (modelMapping[requestModel]) return modelMapping[requestModel];
+  // Glob pattern match (first match wins)
+  for (const [pattern, workflow] of Object.entries(modelMapping)) {
+    if (pattern.includes('*') && globMatch(pattern, requestModel)) {
+      return workflow;
+    }
+  }
+  return 'default';
+}
+
 // Map Anthropic tool_use ID → driver tool call ID
 // Used to resolve IDs when tool_result comes back from Claude Code
 const toolIdMap = new Map<string, string>();
@@ -259,7 +298,7 @@ export async function handleMessages(
     if (isRouting && routingWfKey && workflows?.[routingWfKey]) {
       return { def: workflows[routingWfKey], name: routingWfKey };
     }
-    const name = modelMapping?.[requestModel] || 'default';
+    const name = resolveModelMapping(requestModel, modelMapping);
     return { def: workflows?.[name] || { mode: 'agentic' }, name };
   }
 
