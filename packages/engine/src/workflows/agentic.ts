@@ -1,7 +1,7 @@
 import { agenticProcess, type AgenticWorkflowOptions, type ToolSpec, type DriverInput } from '@modular-prompt/process';
 import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
-import type { EngineTool, EngineLogger, WorkflowResult, WorkflowOptions } from '../types.js';
+import type { EngineTool, EngineLogger, ProcessResult, WorkflowOptions } from '../types.js';
 
 /**
  * Convert EngineTool[] to ToolSpec[] for agenticProcess.
@@ -31,7 +31,7 @@ export async function agenticWorkflow<T>(
   tools: EngineTool[],
   logger: EngineLogger,
   _options: WorkflowOptions,
-): Promise<WorkflowResult> {
+): Promise<ProcessResult> {
   // compile して CompiledPrompt を生成し、ログに記録する
   const compiled = compile(module, context);
   logger.logPrompt('agentic', compiled, { toolCount: tools.length });
@@ -45,18 +45,24 @@ export async function agenticWorkflow<T>(
     includeThinking: false,
   };
 
-  const result = await agenticProcess(driverInput, module, context, agenticOptions);
+  let result;
+  try {
+    result = await agenticProcess(driverInput, module, context, agenticOptions);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.logError('agentic', message, {
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
 
   // Extract pendingToolCalls from executionLog
   const executionLog = result.context.executionLog;
   const allPendingToolCalls = executionLog
     ?.flatMap(entry => entry.pendingToolCalls || []) || [];
 
-  logger.logLlmResponse('agentic', {
-    content: result.output,
-    toolCalls: allPendingToolCalls.length > 0 ? allPendingToolCalls : undefined,
-    finishReason: allPendingToolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const,
-  }, _options.modelName);
+  const { context: _, ...logData } = result;
+  logger.logLlmResponse('agentic', logData, _options.modelName);
 
   if (allPendingToolCalls.length > 0) {
     return {
