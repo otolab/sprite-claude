@@ -103,7 +103,7 @@ export function displayPhaseData(
   }
 
   if (phaseData.output && showOutput) {
-    const output = phaseData.output.content || JSON.stringify(phaseData.output, null, 2);
+    const output = phaseData.output.content || phaseData.output.output || JSON.stringify(phaseData.output, null, 2);
     const header = '\n' + '='.repeat(80) + '\n' +
                    `  ${phaseName} - OUTPUT\n` +
                    '='.repeat(80) + '\n\n';
@@ -114,15 +114,32 @@ export function displayPhaseData(
     const meta: string[] = [];
     if (phaseData.output.model) meta.push(`Model: ${phaseData.output.model}`);
     if (phaseData.output.finishReason) meta.push(`Finish reason: ${phaseData.output.finishReason}`);
+    // usage（consumedUsage: 全query合計）
     if (phaseData.output.usage) {
       const u = phaseData.output.usage;
-      meta.push(`Tokens: ${u.promptTokens || 0} in / ${u.completionTokens || 0} out`);
+      meta.push(`Usage (total): ${u.promptTokens || 0} in / ${u.completionTokens || 0} out`);
+    }
+    // responseUsage（最終応答のusage）
+    if (phaseData.output.responseUsage) {
+      const u = phaseData.output.responseUsage;
+      meta.push(`Usage (response): ${u.promptTokens || 0} in / ${u.completionTokens || 0} out`);
     }
     if (phaseData.output.toolCalls?.length) {
       meta.push(`Tool calls: ${phaseData.output.toolCalls.map((t: any) => t.name).join(', ')}`);
     }
     if (phaseData.output.structuredOutput) {
       meta.push(`Structured output: ${JSON.stringify(phaseData.output.structuredOutput).substring(0, 200)}`);
+    }
+    // errors
+    if (phaseData.output.errors?.length) {
+      meta.push(`Errors: ${phaseData.output.errors.length}`);
+      for (const err of phaseData.output.errors) {
+        meta.push(`  [${err.level}] ${err.message}`);
+      }
+    }
+    // logEntries件数
+    if (phaseData.output.logEntries?.length) {
+      meta.push(`Log entries: ${phaseData.output.logEntries.length}`);
     }
     if (meta.length > 0) {
       const header = '\n' + '-'.repeat(60) + '\n' +
@@ -210,6 +227,19 @@ export function inspectRequest(entries: LogEntry[], seqId: string, filePath?: st
       }
       if (content.includes('<think>')) {
         details.push('has-think');
+      }
+      // usage情報
+      if (entry.data.usage) {
+        const u = entry.data.usage;
+        details.push(`tokens=${u.promptTokens || 0}+${u.completionTokens || 0}`);
+      }
+      // エラー件数
+      if (entry.data.errors?.length) {
+        details.push(`errors=${entry.data.errors.length}`);
+      }
+      // ドライバログ件数
+      if (entry.data.logEntries?.length) {
+        details.push(`logs=${entry.data.logEntries.length}`);
       }
     } else if (entry.type === 'out' && entry.phase === PHASES.RESPONSE) {
       details.push(`stop=${entry.data.stop_reason || '?'}`);
