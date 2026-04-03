@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@modular-prompt/core": "0.2.2",
-    "@modular-prompt/driver": "0.11.0",
+    "@modular-prompt/driver": "0.11.1",
     "@modular-prompt/process": "0.3.9"
   },
   "devDependencies": {
