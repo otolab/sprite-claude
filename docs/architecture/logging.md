@@ -90,12 +90,21 @@ interface LogEntry {
 | `chat` | `prompt` | プロンプト |
 | `chat` | `llm_response` | LLM応答 |
 
+#### Agentic ワークフロー
+
+| Phase | Type | 説明 | 記録されるフィールド |
+|-------|------|------|---------------------|
+| `agentic` | `prompt` | プロンプト（agenticProcess への入力） | `toolCount` |
+| `agentic` | `llm_response` | LLM応答（agenticProcess の最終結果） | `model`（実際に使用されたモデル名） |
+| `agentic` | `error` | agenticProcess 実行時のエラー | `stack` |
+
 #### Passthrough ワークフロー
 
 | Phase | Type | 説明 | 記録されるフィールド |
 |-------|------|------|---------------------|
 | `passthrough` | `prompt` | プロンプト（request.system をシステムプロンプトとして使用） | `toolCount` |
 | `passthrough` | `llm_response` | LLM応答 | `model`（実際に使用されたモデル名） |
+| `passthrough` | `error` | driver.query 実行時のエラー | `stack` |
 
 ## サーバーログ
 
