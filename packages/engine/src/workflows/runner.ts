@@ -2,7 +2,7 @@ import type { AIService, ModelSpec, DriverCapability } from '@modular-prompt/dri
 import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
 import type { DriverSet } from '@modular-prompt/process';
-import type { WorkflowDefinition, WorkflowOptions, EngineTool, EngineLogger, WorkflowResult } from '../types.js';
+import type { WorkflowDefinition, WorkflowOptions, EngineTool, EngineLogger, ProcessResult } from '../types.js';
 import { resolveDriver } from '../driver-cache.js';
 import { agenticWorkflow } from './agentic.js';
 import { passthroughWorkflow } from './passthrough.js';
@@ -78,7 +78,7 @@ export async function runWorkflow<T>(
   tools: EngineTool[],
   logger: EngineLogger,
   options: WorkflowOptions,
-): Promise<WorkflowResult> {
+): Promise<ProcessResult> {
   const overrides = resolveModelOverrides(def, aiService);
 
   if (def.mode === 'passthrough') {

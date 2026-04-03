@@ -2,7 +2,7 @@ import type { AIService } from '@modular-prompt/driver';
 import type { ToolCall, MessageElement, PromptModule } from '@modular-prompt/core';
 import type { MessagesRequest, MessagesResponse, ContentBlock, TextBlock, ToolUseBlock } from '../schema.js';
 import { v4 as uuidv4 } from 'uuid';
-import { runWorkflow, type WorkflowDefinition, type WorkflowResult, type AgenticTask } from '@sprite-claude/engine';
+import { runWorkflow, type WorkflowDefinition, type ProcessResult, type AgenticTask } from '@sprite-claude/engine';
 import { createRequestLogger, toEngineLogger, type ServerLogger } from '../server/logging.js';
 import { loadPromptModules } from './system-prompt.js';
 import type { AnthropicServerOptions } from '../server/types.js';
@@ -24,7 +24,7 @@ function toAnthropicToolId(driverId: string): string {
   return `toolu_${uuid.replace(/-/g, '').substring(0, 20)}`;
 }
 
-function toContentBlocks(result: WorkflowResult): ContentBlock[] {
+function toContentBlocks(result: ProcessResult): ContentBlock[] {
   if (result.type === 'tool_calls') {
     const blocks: ContentBlock[] = [];
     if (result.text) {

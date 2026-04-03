@@ -8,7 +8,8 @@ export { resolveDriver, clearDriverCache, type ResolvedDriver } from './driver-c
 
 // 型
 export type {
-  WorkflowResult,
+  ProcessResult,
+  LlmResponseData,
   WorkflowMode,
   WorkflowOptions,
   WorkflowDefinition,

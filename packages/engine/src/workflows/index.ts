@@ -1,5 +1,5 @@
 import type { AIService } from '@modular-prompt/driver';
-import type { EngineMessage, EngineTool, EngineLogger, WorkflowResult, WorkflowOptions } from '../types.js';
+import type { EngineMessage, EngineTool, EngineLogger, ProcessResult, WorkflowOptions } from '../types.js';
 import { ragWorkflow } from './rag.js';
 import { decisionWorkflow } from './decision.js';
 import { chatWorkflow } from './chat.js';
@@ -21,7 +21,7 @@ import { chatWorkflow } from './chat.js';
  * @param tools - Available tools
  * @param systemPrompt - System prompt
  * @param options - Workflow options
- * @returns WorkflowResult
+ * @returns ProcessResult
  */
 export async function process(
   aiService: AIService,
@@ -30,7 +30,7 @@ export async function process(
   tools: EngineTool[],
   systemPrompt: string,
   options: WorkflowOptions,
-): Promise<WorkflowResult> {
+): Promise<ProcessResult> {
   switch (options.mode) {
     case 'rag':
       return ragWorkflow(aiService, messages, tools, systemPrompt, logger, options.maxTokens);

@@ -35,7 +35,7 @@ const result = await process(
   }
 );
 
-// result: WorkflowResult
+// result: ProcessResult
 // - { type: 'tool_call', toolName: string, input: Record<string, unknown> }
 // - { type: 'response', text: string }
 ```
@@ -71,12 +71,12 @@ interface EngineTool {
 }
 ```
 
-### WorkflowResult
+### ProcessResult
 
 ワークフローの実行結果を表します。
 
 ```typescript
-type WorkflowResult =
+type ProcessResult =
   | { type: 'tool_call'; toolName: string; input: Record<string, unknown> }
   | { type: 'response'; text: string };
 ```

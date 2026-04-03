@@ -2,8 +2,7 @@ import { existsSync, mkdirSync, appendFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import type { MessagesRequest, MessagesResponse } from '../schema.js';
-import type { QueryResult } from '@modular-prompt/driver';
-import type { EngineLogger } from '@sprite-claude/engine';
+import type { EngineLogger, LlmResponseData } from '@sprite-claude/engine';
 import { formatCompletionPrompt } from '@modular-prompt/driver';
 
 /**
@@ -13,7 +12,7 @@ export interface LogEntry {
   timestamp: string;
   pid: number;
   seqId: string;
-  phase: 'request' | 'response' | 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough';
+  phase: 'request' | 'response' | 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough' | 'agentic';
   type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error';
   // Note: data can be MessagesRequest, MessagesResponse, prompt string, LLM response, etc.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,7 +140,7 @@ export class RequestLogger {
    * Log prompt data
    */
   logPrompt(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough',
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough' | 'agentic',
     content: string,
     metadata?: { toolCount?: number },
   ): void {
@@ -161,21 +160,21 @@ export class RequestLogger {
    * Log LLM response data (for phase1/phase2 outputs)
    */
   logLlmResponse(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough',
-    data: QueryResult,
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough' | 'agentic',
+    data: LlmResponseData,
     model?: string,
   ): void {
     if (this.level === 'none') return;
 
     let content: Record<string, unknown>;
     if (this.level === 'minimal') {
+      const textContent = 'content' in data ? data.content : 'output' in data ? data.output : '';
       content = {
-        hasContent: !!data.content,
-        hasStructuredOutput: !!data.structuredOutput,
-        contentLength: data.content?.length || 0,
+        hasContent: !!textContent,
+        contentLength: textContent?.length || 0,
       };
     } else {
-      content = { ...data };
+      content = { ...data } as Record<string, unknown>;
     }
 
     if (model) {
@@ -196,7 +195,7 @@ export class RequestLogger {
    * Log error data
    */
   logError(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough',
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough' | 'agentic',
     message: string,
     data?: any,
   ): void {

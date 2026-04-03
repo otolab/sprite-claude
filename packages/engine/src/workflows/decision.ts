@@ -1,6 +1,6 @@
 import type { AIService } from '@modular-prompt/driver';
 import { compile, createContext } from '@modular-prompt/core';
-import type { EngineMessage, EngineTool, EngineLogger, WorkflowResult } from '../types.js';
+import type { EngineMessage, EngineTool, EngineLogger, ProcessResult } from '../types.js';
 import { resolveDriver } from '../driver-cache.js';
 import { toolDecisionModule } from '../prompts/decision-module.js';
 import { toolCallModule } from '../prompts/call-module.js';
@@ -17,7 +17,7 @@ import { toolCallModule } from '../prompts/call-module.js';
  * @param tools - Available tools
  * @param logger - Request logger
  * @param systemPrompt - System prompt for context (optional)
- * @returns WorkflowResult or null
+ * @returns ProcessResult or null
  */
 export async function decisionWorkflow(
   aiService: AIService,
@@ -25,7 +25,7 @@ export async function decisionWorkflow(
   tools: EngineTool[],
   logger: EngineLogger,
   systemPrompt?: string
-): Promise<WorkflowResult | null> {
+): Promise<ProcessResult | null> {
   // Extract user message (last user message)
   const userMessage = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
 

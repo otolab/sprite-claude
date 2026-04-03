@@ -1,6 +1,6 @@
 import type { AIService } from '@modular-prompt/driver';
 import { compile, createContext } from '@modular-prompt/core';
-import type { EngineMessage, EngineTool, EngineLogger, WorkflowResult } from '../types.js';
+import type { EngineMessage, EngineTool, EngineLogger, ProcessResult } from '../types.js';
 import { resolveDriver } from '../driver-cache.js';
 import { analysisModule, type AnalysisResult } from '../prompts/analysis-module.js';
 import { toolGenerationModule, responseGenerationModule } from '../prompts/generation-module.js';
@@ -32,7 +32,7 @@ function removeThinkTags(text: string): string {
  * @param systemPrompt - System prompt for direct responses
  * @param logger - Request logger
  * @param maxTokensConfig - Max tokens configuration for each phase
- * @returns WorkflowResult (tool call or text response)
+ * @returns ProcessResult (tool call or text response)
  */
 export async function ragWorkflow(
   aiService: AIService,
@@ -45,7 +45,7 @@ export async function ragWorkflow(
     phase2Tool?: number;
     phase2Response?: number;
   }
-): Promise<WorkflowResult> {
+): Promise<ProcessResult> {
   // Phase 1: Analysis - reasoning capability preferred
   const phase1Resolved = await resolveDriver(aiService, ['reasoning'], { preferLocal: true });
   if (!phase1Resolved) {
