@@ -2,8 +2,7 @@ import { existsSync, mkdirSync, appendFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import type { MessagesRequest, MessagesResponse } from '../schema.js';
-import type { QueryResult } from '@modular-prompt/driver';
-import type { EngineLogger } from '@sprite-claude/engine';
+import type { EngineLogger, LlmResponseData } from '@sprite-claude/engine';
 import { formatCompletionPrompt } from '@modular-prompt/driver';
 
 /**
@@ -13,8 +12,8 @@ export interface LogEntry {
   timestamp: string;
   pid: number;
   seqId: string;
-  phase: 'request' | 'response' | 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough';
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error';
+  phase: string;
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';
   // Note: data can be MessagesRequest, MessagesResponse, prompt string, LLM response, etc.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
@@ -141,7 +140,7 @@ export class RequestLogger {
    * Log prompt data
    */
   logPrompt(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough',
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'main' | 'chat' | 'passthrough' | 'agentic',
     content: string,
     metadata?: { toolCount?: number },
   ): void {
@@ -161,21 +160,21 @@ export class RequestLogger {
    * Log LLM response data (for phase1/phase2 outputs)
    */
   logLlmResponse(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough',
-    data: QueryResult,
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough' | 'agentic',
+    data: LlmResponseData,
     model?: string,
   ): void {
     if (this.level === 'none') return;
 
     let content: Record<string, unknown>;
     if (this.level === 'minimal') {
+      const textContent = 'content' in data ? data.content : 'output' in data ? data.output : '';
       content = {
-        hasContent: !!data.content,
-        hasStructuredOutput: !!data.structuredOutput,
-        contentLength: data.content?.length || 0,
+        hasContent: !!textContent,
+        contentLength: textContent?.length || 0,
       };
     } else {
-      content = { ...data };
+      content = { ...data } as Record<string, unknown>;
     }
 
     if (model) {
@@ -196,7 +195,7 @@ export class RequestLogger {
    * Log error data
    */
   logError(
-    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough',
+    phase: 'phase1-analysis' | 'phase1-decision' | 'phase2-tool-generation' | 'phase2-tool-call' | 'phase2-response-generation' | 'chat' | 'passthrough' | 'agentic',
     message: string,
     data?: any,
   ): void {
@@ -209,6 +208,26 @@ export class RequestLogger {
       phase,
       type: 'error',
       data: { message, ...(data || {}) },
+    });
+  }
+
+  /**
+   * Log driver/model selection info
+   */
+  logDriverInfo(
+    phase: string,
+    model: string,
+    capabilities: unknown,
+  ): void {
+    if (this.level === 'none') return;
+
+    this.appendLog({
+      timestamp: new Date().toISOString(),
+      pid: this.pid,
+      seqId: this.seqId,
+      phase,
+      type: 'driver_info',
+      data: { model, ...(capabilities as Record<string, unknown> || {}) },
     });
   }
 }
@@ -251,8 +270,9 @@ export function toEngineLogger(requestLogger: RequestLogger, serverLogger?: Serv
     logError(phase, message, data) {
       requestLogger.logError(phase as any, message, data);
     },
-    logDriverInfo(_phase, model, capabilities) {
+    logDriverInfo(phase, model, capabilities) {
       serverLogger?.info('driver', `Model capabilities: ${model}`, capabilities);
+      requestLogger.logDriverInfo(phase, model, capabilities);
     },
   };
 }

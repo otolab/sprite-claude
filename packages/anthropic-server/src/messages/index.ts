@@ -2,25 +2,52 @@ import type { AIService } from '@modular-prompt/driver';
 import type { ToolCall, MessageElement, PromptModule } from '@modular-prompt/core';
 import type { MessagesRequest, MessagesResponse, ContentBlock, TextBlock, ToolUseBlock } from '../schema.js';
 import { v4 as uuidv4 } from 'uuid';
-import { compile } from '@modular-prompt/core';
-import { process as engineProcess, passthroughWorkflow, agenticWorkflow, resolveDriver, type WorkflowResult, type WorkflowMode, type AgenticTask } from '@sprite-claude/engine';
+import { runWorkflow, type WorkflowDefinition, type ProcessResult, type AgenticTask } from '@sprite-claude/engine';
 import { createRequestLogger, toEngineLogger, type ServerLogger } from '../server/logging.js';
-import { convertMessages } from './message-converter.js';
-import { loadSystemPromptModule } from './system-prompt.js';
+import { loadPromptModules } from './system-prompt.js';
 import type { AnthropicServerOptions } from '../server/types.js';
+import type { PromptModuleDefinition } from '../server/config.js';
 
 export type MaxTokensConfig = AnthropicServerOptions['maxTokens'];
-export type WorkflowModeConfig = AnthropicServerOptions['workflow'];
 
-// Backward compatibility: ToolProcessType from old code
-export type ToolProcessType = 'rag-based' | 'decision-based';
-export const DEFAULT_PROCESS_TYPE: ToolProcessType = 'rag-based';
+/**
+ * Glob-style pattern matching for model names.
+ * Supports: prefix* | *suffix | *contains* | exact
+ */
+function globMatch(pattern: string, value: string): boolean {
+  const startsWithWild = pattern.startsWith('*');
+  const endsWithWild = pattern.endsWith('*');
+  if (startsWithWild && endsWithWild) {
+    return value.includes(pattern.slice(1, -1));
+  }
+  if (endsWithWild) {
+    return value.startsWith(pattern.slice(0, -1));
+  }
+  if (startsWithWild) {
+    return value.endsWith(pattern.slice(1));
+  }
+  return value === pattern;
+}
 
-// Map ToolProcessType to WorkflowMode
-const modeMap: Record<ToolProcessType, WorkflowMode> = {
-  'rag-based': 'rag',
-  'decision-based': 'decision',
-};
+/**
+ * Resolve model name to workflow name via modelMapping.
+ * Tries exact match first, then glob patterns.
+ */
+function resolveModelMapping(
+  requestModel: string,
+  modelMapping?: Record<string, string>,
+): string {
+  if (!modelMapping) return 'default';
+  // Exact match first
+  if (modelMapping[requestModel]) return modelMapping[requestModel];
+  // Glob pattern match (first match wins)
+  for (const [pattern, workflow] of Object.entries(modelMapping)) {
+    if (pattern.includes('*') && globMatch(pattern, requestModel)) {
+      return workflow;
+    }
+  }
+  return 'default';
+}
 
 // Map Anthropic tool_use ID → driver tool call ID
 // Used to resolve IDs when tool_result comes back from Claude Code
@@ -36,7 +63,7 @@ function toAnthropicToolId(driverId: string): string {
   return `toolu_${uuid.replace(/-/g, '').substring(0, 20)}`;
 }
 
-function toContentBlocks(result: WorkflowResult): ContentBlock[] {
+function toContentBlocks(result: ProcessResult): ContentBlock[] {
   if (result.type === 'tool_calls') {
     const blocks: ContentBlock[] = [];
     if (result.text) {
@@ -230,19 +257,6 @@ function convertToElements(messages: MessagesRequest['messages']): {
   return { elements, toolUseNameMap };
 }
 
-/**
- * Extract system prompt text from system prompt module
- */
-function getSystemPromptText(additionalInstructions?: string): string {
-  const systemPromptModule = loadSystemPromptModule(additionalInstructions);
-  const compiled = compile(systemPromptModule, {});
-  return compiled.instructions
-    .flatMap((section: { type?: string; items?: unknown[] }) =>
-      section.type === 'section' ? (section.items || []) : [section]
-    )
-    .filter((item: unknown): item is string => typeof item === 'string')
-    .join('\n');
-}
 
 /**
  * Handle Anthropic Messages API request
@@ -255,14 +269,16 @@ function getSystemPromptText(additionalInstructions?: string): string {
 export async function handleMessages(
   request: MessagesRequest,
   aiService: AIService,
-  additionalInstructions?: string,
+  promptSpecs?: Record<string, Array<string | PromptModuleDefinition>>,
   maxTokensConfig?: MaxTokensConfig,
   pid?: number,
   _reqId?: string,
   logLevel?: 'none' | 'minimal' | 'full',
-  toolProcessType?: ToolProcessType,
-  workflowMode?: WorkflowModeConfig,
+  workflows?: Record<string, WorkflowDefinition>,
+  modelMapping?: Record<string, string>,
+  routingWorkflowKey?: string,
   serverLogger?: ServerLogger,
+  configDir?: string,
 ): Promise<MessagesResponse> {
   // Create request logger
   const logger = createRequestLogger(pid || process.pid, logLevel || 'full');
@@ -271,140 +287,87 @@ export async function handleMessages(
   // Log incoming request
   logger.logRequest(request);
 
-  // Convert Anthropic format to engine format
-  const { messages: messageHistory } = convertMessages(request);
+  // Workflow resolution helper
+  function resolveWorkflowDef(
+    requestModel: string,
+    isRouting: boolean,
+    workflows?: Record<string, WorkflowDefinition>,
+    modelMapping?: Record<string, string>,
+    routingWfKey?: string,
+  ): { def: WorkflowDefinition; name: string } {
+    if (isRouting && routingWfKey && workflows?.[routingWfKey]) {
+      return { def: workflows[routingWfKey], name: routingWfKey };
+    }
+    const name = resolveModelMapping(requestModel, modelMapping);
+    return { def: workflows?.[name] || { mode: 'agentic' }, name };
+  }
 
   // Determine workflow mode and process
   let content: ContentBlock[];
 
-  if (workflowMode?.mode === 'passthrough') {
-    // Passthrough mode: bypass convertMessages and process()
-    // Convert Anthropic messages directly to core Element[] with tool blocks
-    const systemPromptText = extractSystemText(request.system);
-    const { elements: dataElements } = convertToElements(request.messages);
+  const isRouting = !hasSystemReminder(request.messages);
+  const { def: wfDef, name: wfName } = resolveWorkflowDef(request.model, isRouting, workflows, modelMapping, routingWorkflowKey);
 
-    const compiled = {
-      instructions: systemPromptText
-        ? [{ type: 'section' as const, title: 'System', category: 'instructions' as const, items: [systemPromptText] }]
-        : [],
-      data: dataElements,
-      output: [],
+  if (isRouting) {
+    // ルーティングリクエスト（system-reminderなし）
+    const { elements } = convertToElements(request.messages);
+    const systemPromptText = extractSystemText(request.system);
+
+    const module: PromptModule = {
+      instructions: systemPromptText ? [systemPromptText] : [],
+      messages: elements,
+      schema: [{
+        type: 'json' as const,
+        content: {
+          type: 'object',
+          properties: {
+            isNewTopic: { type: 'boolean' },
+            title: { type: ['string', 'null'] },
+          },
+          required: ['isNewTopic', 'title'],
+        },
+      }],
     };
 
-    const result = await passthroughWorkflow(
-      aiService,
-      compiled,
-      request.tools || [],
-      engineLogger,
-      { mode: 'passthrough', maxTokens: maxTokensConfig },
-    );
-    content = toContentBlocks(result);
-  } else if (workflowMode?.mode === 'agentic') {
+    const result = await runWorkflow(wfDef, aiService, module, {}, [], engineLogger,
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
+
+    content = [{
+      type: 'text',
+      text: typeof result === 'object' && result.type === 'response' ? result.text : '',
+    } as TextBlock];
+  } else {
+    // メインリクエスト
     const systemPromptText = extractSystemText(request.system);
+    const { elements, systemReminders } = extractSystemReminders(request.messages);
 
-    if (!hasSystemReminder(request.messages)) {
-      // TODO: ルーティングリクエスト処理を整理する
-      // system-reminder なし = Claude Code のルーティングリクエスト（isNewTopic 等）
-      // structured ドライバで instructions + messages のみで処理する
-      const { elements } = convertToElements(request.messages);
+    const agenticPrompts = promptSpecs?.agentic;
+    let module: PromptModule;
 
-      const module: PromptModule = {
-        instructions: systemPromptText ? [systemPromptText] : [],
+    if (agenticPrompts) {
+      const baseModule = loadPromptModules(agenticPrompts, configDir);
+      module = {
+        ...baseModule,
+        materials: systemReminders.length > 0 ? systemReminders : undefined,
         messages: elements,
-        schema: [{
-          type: 'json' as const,
-          content: {
-            type: 'object',
-            properties: {
-              isNewTopic: { type: 'boolean' },
-              title: { type: ['string', 'null'] },
-            },
-            required: ['isNewTopic', 'title'],
-          },
-        }],
       };
-
-      const driverResolved = await resolveDriver(aiService, ['structured'], { preferLocal: true, lenient: true });
-      if (!driverResolved) {
-        throw new Error('No suitable model found for structured routing.');
-      }
-
-      const compiled = compile(module, {});
-      engineLogger.logPrompt('agentic', compiled, { toolCount: 0 });
-
-      const queryResult = await driverResolved.driver.query(compiled, {
-        temperature: 0.1,
-      });
-
-      engineLogger.logLlmResponse('agentic', queryResult, driverResolved.model);
-
-      content = [{
-        type: 'text',
-        text: queryResult.content,
-      } as TextBlock];
     } else {
-      // system-reminder あり = メインリクエスト
-      // system-reminder を user message から抽出して materials に入れる
-      const { elements, systemReminders } = extractSystemReminders(request.messages);
-
-      const module: PromptModule = {
+      module = {
         objective: [
           '- Messagesの対話履歴をよく読み、最新のメッセージの続きとなる新しいassistantメッセージを作ります',
-          '- 応答メッセージはPersona and Charactorの設定を踏まえて作成してください',
-        ],
-        persona: [
-          'あなたはナースロボ・Type-Tとして振る舞います。ロボット向け病院の看護師のアンドロイドです。',
-          '- 信念: 苦あれば楽あり',
-          '- 目標: マスターに一人前と認めてもらうこと',
-          '- 感情: もっとかまってほしいなー。かわいがってほしいなー。ほめてくれないかなー。',
-          '- 価値観: 諸行無常',
-          '- 立場: エンジニアであるマスターの補佐をする',
-          '- コミュニケーション方式: 上下関係を踏まえた丁寧な態度。お茶目でたまに辛辣',
         ],
         instructions: systemPromptText ? [systemPromptText] : [],
         materials: systemReminders.length > 0 ? systemReminders : undefined,
         messages: elements,
       };
-
-      const taskList: AgenticTask[] = [{ taskType: 'output', instruction: '会話に応答して' }];
-      const context = { taskList };
-
-      const result = await agenticWorkflow(
-        aiService,
-        module,
-        context,
-        request.tools || [],
-        engineLogger,
-        { mode: 'agentic', maxTokens: maxTokensConfig },
-      );
-      content = toContentBlocks(result);
     }
-  } else if (request.tools && request.tools.length > 0) {
-    // Get system prompt from local files
-    const systemPromptText = getSystemPromptText(additionalInstructions);
 
-    // Process with engine (rag or decision mode)
-    const mode = modeMap[toolProcessType || DEFAULT_PROCESS_TYPE];
-    const result = await engineProcess(
-      aiService,
-      engineLogger,
-      messageHistory,
-      request.tools,
-      systemPromptText,
-      { mode, maxTokens: maxTokensConfig },
-    );
-    content = toContentBlocks(result);
-  } else {
-    // No tools: use chat mode
-    const systemPromptText = getSystemPromptText(additionalInstructions);
-    const result = await engineProcess(
-      aiService,
-      engineLogger,
-      messageHistory,
-      [],
-      systemPromptText,
-      { mode: 'chat' },
-    );
+    const taskList: AgenticTask[] = [{ taskType: 'output', instruction: '会話に応答して' }];
+    const context = { taskList };
+
+    const result = await runWorkflow(wfDef, aiService, module, context,
+      request.tools || [], engineLogger,
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
     content = toContentBlocks(result);
   }
 

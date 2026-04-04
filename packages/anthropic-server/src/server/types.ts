@@ -1,4 +1,6 @@
 import type { AIService, ModelSpec, SelectionOptions } from '@modular-prompt/driver';
+import type { PromptModuleDefinition } from './config.js';
+import type { WorkflowDefinition } from '@sprite-claude/engine';
 
 /**
  * Options for Anthropic-compatible server
@@ -38,11 +40,10 @@ export interface AnthropicServerOptions {
   };
 
   // Prompt settings
-  prompt?: {
-    // Additional instructions to append to base system prompt
-    // Can be inline text or file reference with @ prefix (e.g., "@prompts/custom.md")
-    additionalInstructions?: string;
-  };
+  prompts?: Record<string, Array<string | PromptModuleDefinition>>;
+
+  // Configuration directory
+  configDir?: string;
 
   // Token limits
   maxTokens?: {
@@ -54,10 +55,9 @@ export interface AnthropicServerOptions {
     phase2Response?: number;
   };
 
-  // Workflow mode override
-  workflow?: {
-    mode?: 'rag' | 'decision' | 'chat' | 'passthrough' | 'agentic';
-  };
+  workflows?: Record<string, WorkflowDefinition>;
+  modelMapping?: Record<string, string>;
+  routingWorkflow?: string;
 }
 
 // Extend Fastify instance type

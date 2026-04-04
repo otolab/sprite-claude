@@ -1,4 +1,4 @@
-import type { AIDriver, AIService, DriverCapability, SelectionOptions } from '@modular-prompt/driver';
+import type { AIDriver, AIService, DriverCapability, ModelSpec, SelectionOptions } from '@modular-prompt/driver';
 
 /**
  * Resolved driver with model metadata
@@ -27,19 +27,24 @@ const cache = new Map<string, AIDriver>();
  * @param aiService - AI service instance
  * @param capabilities - Required capabilities for this phase
  * @param hints - Additional selection hints (preferLocal, preferFast, etc.)
+ * @param overrideSpec - Override model spec (skips selectModels)
  * @returns ResolvedDriver with driver instance and model metadata
  */
 export async function resolveDriver(
   aiService: AIService,
   capabilities: DriverCapability[] = [],
   hints?: SelectionOptions,
+  overrideSpec?: ModelSpec,
 ): Promise<ResolvedDriver | null> {
-  const models = aiService.selectModels(capabilities, hints);
-  if (!models.length) {
-    return null;
+  let spec: ModelSpec | null;
+  if (overrideSpec) {
+    spec = overrideSpec;
+  } else {
+    const models = aiService.selectModels(capabilities, hints);
+    spec = models.length ? models[0] : null;
   }
+  if (!spec) return null;
 
-  const spec = models[0];
   const key = `${spec.provider}:${spec.model}`;
 
   const cached = cache.get(key);

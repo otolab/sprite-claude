@@ -1,7 +1,6 @@
-import type { AIService, ToolDefinition } from '@modular-prompt/driver';
+import type { AIDriver, ToolDefinition, QueryResult } from '@modular-prompt/driver';
 import type { CompiledPrompt } from '@modular-prompt/core';
-import type { EngineTool, EngineLogger, WorkflowResult, WorkflowOptions } from '../types.js';
-import { resolveDriver } from '../driver-cache.js';
+import type { EngineTool, EngineLogger, ProcessResult, WorkflowOptions } from '../types.js';
 
 /**
  * Convert EngineTool (Anthropic format) to ToolDefinition (driver format)
@@ -21,49 +20,47 @@ function toToolDefinitions(tools: EngineTool[]): ToolDefinition[] {
  * (StandardMessageElement with toolCalls, ToolResultMessageElement with role:'tool').
  * Tools are passed to the driver via QueryOptions.
  *
- * @param aiService - AI service for driver selection
+ * @param driver - AI driver instance
  * @param compiled - Pre-built CompiledPrompt with full message history
  * @param tools - Available tools (passed to driver via QueryOptions)
  * @param logger - Request logger
  * @param options - Workflow options
- * @returns WorkflowResult (text or tool_call response)
+ * @returns ProcessResult (text or tool_call response)
  */
 export async function passthroughWorkflow(
-  aiService: AIService,
+  driver: AIDriver,
   compiled: CompiledPrompt,
   tools: EngineTool[],
   logger: EngineLogger,
   options: WorkflowOptions,
-): Promise<WorkflowResult> {
-  const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true });
-  if (!resolved) {
-    throw new Error('No suitable model found for passthrough.');
-  }
-
-  // Log driver capabilities on first use
-  if (resolved.isNew) {
-    const caps = await (resolved.driver as any).getCapabilities?.();
-    if (caps) {
-      logger.logDriverInfo?.('passthrough', resolved.model, caps);
-    }
-  }
-
+): Promise<ProcessResult> {
   logger.logPrompt('passthrough', compiled, { toolCount: tools.length });
 
   const toolDefs = tools.length > 0 ? toToolDefinitions(tools) : undefined;
 
-  const result = await resolved.driver.query(compiled, {
-    maxTokens: options.maxTokens?.phase2Response ?? 2000,
-    temperature: 0.7,
-    tools: toolDefs,
-    toolChoice: toolDefs ? 'auto' : undefined,
-  });
+  let result: QueryResult;
+  try {
+    result = await driver.query(compiled, {
+      maxTokens: options.maxTokens?.phase2Response ?? 2000,
+      temperature: 0.7,
+      tools: toolDefs,
+      toolChoice: toolDefs ? 'auto' : undefined,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.logError('passthrough', message, {
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
 
-  logger.logLlmResponse('passthrough', result, resolved.model);
+  logger.logLlmResponse('passthrough', result, options.modelName);
 
   // Handle driver errors
   if (result.finishReason === 'error') {
-    throw new Error(result.content || 'Driver returned an error');
+    const message = result.content || 'Driver returned an error';
+    logger.logError('passthrough', message);
+    throw new Error(message);
   }
 
   // Handle tool calls from the model

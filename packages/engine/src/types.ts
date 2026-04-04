@@ -1,5 +1,3 @@
-import type { QueryResult } from '@modular-prompt/driver';
-
 export interface EngineMessage {
   type: 'message' | 'text';
   role?: 'system' | 'user' | 'assistant';
@@ -23,7 +21,7 @@ export interface ToolCallResult {
   arguments: Record<string, unknown>;
 }
 
-export type WorkflowResult =
+export type ProcessResult =
   | { type: 'tool_call'; toolName: string; input: Record<string, unknown> }
   | { type: 'tool_calls'; calls: ToolCallResult[]; text?: string }
   | { type: 'response'; text: string };
@@ -37,11 +35,26 @@ export interface WorkflowOptions {
     phase2Tool?: number;
     phase2Response?: number;
   };
+  /** ワークフロー定義名（config.yamlのworkflows.xxxのキー名） */
+  workflowName?: string;
+  /** ログ出力用のデフォルトモデル名（runner.tsが設定） */
+  modelName?: string;
 }
+
+import type { QueryResult } from '@modular-prompt/driver';
+import type { WorkflowResult as ProcessWorkflowResult } from '@modular-prompt/process';
+
+/** logLlmResponse に渡せるデータ型 */
+export type LlmResponseData = QueryResult | Omit<ProcessWorkflowResult<unknown>, 'context'>;
 
 export interface EngineLogger {
   logPrompt(phase: string, compiled: unknown, metadata?: { toolCount?: number }): void;
-  logLlmResponse(phase: string, data: QueryResult, model?: string): void;
+  logLlmResponse(phase: string, data: LlmResponseData, model?: string): void;
   logError(phase: string, message: string, data?: unknown): void;
   logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
+}
+
+export interface WorkflowDefinition {
+  mode: WorkflowMode;
+  models?: Record<string, string | string[]>;
 }

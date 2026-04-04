@@ -72,15 +72,9 @@ class ServerManager:
             '--host', host,
         ]
 
-        # Pass config file path to TypeScript server
-        # TypeScript will read the config file directly and handle all settings
-        config_path = str(self.config.config_path)
-        cmd.extend(['--config', config_path])
-
-        # Add additional instructions if configured
-        additional_instructions = self.config.get('prompt.additional_instructions')
-        if additional_instructions:
-            cmd.extend(['--additional-instructions', additional_instructions])
+        # Pass config directory to TypeScript server
+        # TypeScript will read config.yaml from this directory and resolve prompts relative to it
+        cmd.extend(['--config-dir', str(self.config.config_path.parent)])
 
         # Prepare environment variables
         env = os.environ.copy()

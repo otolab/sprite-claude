@@ -1,9 +1,7 @@
-import { agenticProcess, type AgenticWorkflowOptions, type ToolSpec, type DriverSet } from '@modular-prompt/process';
+import { agenticProcess, type AgenticWorkflowOptions, type ToolSpec, type DriverInput } from '@modular-prompt/process';
 import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
-import type { AIService } from '@modular-prompt/driver';
-import type { EngineTool, EngineLogger, WorkflowResult, WorkflowOptions } from '../types.js';
-import { resolveDriver } from '../driver-cache.js';
+import type { EngineTool, EngineLogger, ProcessResult, WorkflowOptions } from '../types.js';
 
 /**
  * Convert EngineTool[] to ToolSpec[] for agenticProcess.
@@ -27,43 +25,13 @@ function toToolSpecs(tools: EngineTool[]): ToolSpec[] {
  * Tools are passed as ToolSpec[] and returned as pendingToolCalls.
  */
 export async function agenticWorkflow<T>(
-  aiService: AIService,
+  driverInput: DriverInput,
   module: PromptModule<T>,
   context: T,
   tools: EngineTool[],
   logger: EngineLogger,
   _options: WorkflowOptions,
-): Promise<WorkflowResult> {
-  // Resolve drivers for each role
-  // output → chat, planning → plan, execution tasks → instruct
-  const [defaultResolved, fastResolved, reasoningResolved, structuredResolved] = await Promise.all([
-    resolveDriver(aiService, [], { preferLocal: true, lenient: true }),
-    resolveDriver(aiService, ['chat'], { preferLocal: true, preferFast: true, lenient: false }),
-    resolveDriver(aiService, ['reasoning'], { preferLocal: true, lenient: false }),
-    resolveDriver(aiService, ['structured'], { preferLocal: true, lenient: false }),
-  ]);
-
-  if (!defaultResolved) {
-    throw new Error(`No suitable model found for default.`);
-  }
-
-  for (const r of [defaultResolved, fastResolved, reasoningResolved, structuredResolved]) {
-    if (r?.isNew) {
-      const caps = await (r.driver as any).getCapabilities?.();
-      if (caps) {
-        logger.logDriverInfo?.('agentic', r.model, caps);
-      }
-    }
-  }
-
-  const driverSet: DriverSet = {
-    default: defaultResolved.driver,
-    chat: fastResolved?.driver || defaultResolved.driver,
-    plan: reasoningResolved?.driver || defaultResolved.driver,
-    instruct: structuredResolved?.driver || defaultResolved.driver,
-    thinking: reasoningResolved?.driver || defaultResolved.driver,
-  };
-
+): Promise<ProcessResult> {
   // compile して CompiledPrompt を生成し、ログに記録する
   const compiled = compile(module, context);
   logger.logPrompt('agentic', compiled, { toolCount: tools.length });
@@ -73,21 +41,28 @@ export async function agenticWorkflow<T>(
   const agenticOptions: AgenticWorkflowOptions = {
     tools: toolSpecs,
     enablePlanning: true,
-    includeThinking: true,
+    // thinkタグがモデルによって特殊な意味に解釈されるケースがあるため無効化
+    includeThinking: false,
   };
 
-  const result = await agenticProcess(driverSet, module, context, agenticOptions);
+  let result;
+  try {
+    result = await agenticProcess(driverInput, module, context, agenticOptions);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.logError('agentic', message, {
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
 
   // Extract pendingToolCalls from executionLog
   const executionLog = result.context.executionLog;
   const allPendingToolCalls = executionLog
     ?.flatMap(entry => entry.pendingToolCalls || []) || [];
 
-  logger.logLlmResponse('agentic', {
-    content: result.output,
-    toolCalls: allPendingToolCalls.length > 0 ? allPendingToolCalls : undefined,
-    finishReason: allPendingToolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const,
-  }, defaultResolved.model);
+  const { context: _, ...logData } = result;
+  logger.logLlmResponse('agentic', logData, _options.modelName);
 
   if (allPendingToolCalls.length > 0) {
     return {

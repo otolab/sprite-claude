@@ -35,10 +35,38 @@ const result = await process(
   }
 );
 
-// result: WorkflowResult
+// result: ProcessResult
 // - { type: 'tool_call', toolName: string, input: Record<string, unknown> }
+// - { type: 'tool_calls', calls: ToolCallResult[]; text?: string }
 // - { type: 'response', text: string }
 ```
+
+### `runWorkflow()` 関数
+
+`WorkflowDefinition` に基づいてワークフローを実行する統合エントリーポイントです。
+
+```typescript
+import { runWorkflow } from '@sprite-claude/engine';
+
+const result = await runWorkflow(
+  def,              // WorkflowDefinition
+  aiService,        // AIService
+  module,           // PromptModule<T>
+  context,          // T
+  tools,            // EngineTool[]
+  logger,           // EngineLogger
+  {
+    mode: 'agentic',
+    workflowName: 'default',  // config.yamlのworkflows.xxxのキー名
+    modelName: 'gemini-2.5-flash',
+  }
+);
+```
+
+**機能**:
+1. `WorkflowDefinition` からモデル解決（各役割ごとに適切なモデルを選択）
+2. ドライバー構築（agenticモード: DriverSet、passthroughモード: 単一のAIDriver）
+3. ワークフロー実行（modeに応じて適切なワークフロー関数を呼び出し）
 
 ## 型定義
 
@@ -71,15 +99,50 @@ interface EngineTool {
 }
 ```
 
-### WorkflowResult
+### ProcessResult
 
 ワークフローの実行結果を表します。
 
 ```typescript
-type WorkflowResult =
+type ProcessResult =
   | { type: 'tool_call'; toolName: string; input: Record<string, unknown> }
+  | { type: 'tool_calls'; calls: ToolCallResult[]; text?: string }
   | { type: 'response'; text: string };
 ```
+
+**tool_calls バリアント**: 複数のツール呼び出しを同時に返す場合に使用します（agenticワークフローなど）。
+
+### WorkflowOptions
+
+ワークフロー実行時のオプションです。
+
+```typescript
+interface WorkflowOptions {
+  mode: WorkflowMode;
+  maxTokens?: {
+    phase1?: number;
+    phase2Tool?: number;
+    phase2Response?: number;
+  };
+  workflowName?: string;  // ワークフロー定義名（config.yamlのworkflows.xxxのキー名）
+  modelName?: string;     // ログ出力用のデフォルトモデル名
+}
+```
+
+### WorkflowDefinition
+
+ワークフロー定義の構造です。
+
+```typescript
+interface WorkflowDefinition {
+  mode: WorkflowMode;
+  models?: Record<string, string | string[]>;
+}
+```
+
+**models**: 役割ごとのモデル指定
+- キー: 役割名（`default`, `chat`, `plan`, `instruct`, `thinking`）
+- 値: モデル名（文字列）またはcapabilities（文字列配列）
 
 ### EngineLogger
 
@@ -87,10 +150,32 @@ type WorkflowResult =
 
 ```typescript
 interface EngineLogger {
-  logPrompt(phase: string, compiled: unknown): void;
-  logLlmResponse(phase: string, data: QueryResult): void;
+  logPrompt(phase: string, compiled: unknown, metadata?: { toolCount?: number }): void;
+  logLlmResponse(phase: string, data: LlmResponseData, model?: string): void;
+  logError(phase: string, message: string, data?: unknown): void;
+  logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
 }
 ```
+
+**変更点**:
+- `logPrompt`: `metadata` パラメータ追加（ツール数など）
+- `logLlmResponse`: `data` が `LlmResponseData` 型に、`model` パラメータ追加
+- `logError`: エラー記録用メソッド追加
+- `logDriverInfo`: ドライバー情報記録用メソッド追加（optional）
+
+### LlmResponseData
+
+`logLlmResponse` に渡せるデータ型です。
+
+```typescript
+import type { QueryResult } from '@modular-prompt/driver';
+import type { WorkflowResult as ProcessWorkflowResult } from '@modular-prompt/process';
+
+type LlmResponseData = QueryResult | Omit<ProcessWorkflowResult<unknown>, 'context'>;
+```
+
+- **passthrough**: `QueryResult` を渡す
+- **agentic**: `WorkflowResult` から `context` を除いたものを渡す（logEntries, errors, consumedUsage, responseUsage等を含む）
 
 ## ワークフローモード
 

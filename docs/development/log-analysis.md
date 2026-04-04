@@ -31,27 +31,34 @@ sprite-claude のリクエストログは、Claude Code クライアントとサ
 
 ## ワークフロー種別の識別
 
-ログの phase フィールドからワークフローを判別する。
+ログの `phase` フィールドにはワークフロー定義名（`config.yaml` の `workflows.xxx` のキー名）が入ります。
+ワークフローモードは `driver_info` エントリで確認できます。
 
-| phase 値 | ワークフロー | 特徴 |
-|----------|-------------|------|
-| `agentic` | agentic | planning + task 実行。tools > 0 のメインリクエスト |
-| `agentic`（tools=0） | routing | Claude Code の isNewTopic 判定。tools=0 |
-| `passthrough` | passthrough | プロンプト加工なしの直接転送 |
-| `phase1-analysis` | rag | 2 フェーズ。分析 → 生成 |
-| `phase1-decision` | decision | 2 フェーズ。判定 → ツール呼び出し |
-| `chat` | chat | ツールなしの会話 |
+**注**: 以前の実装では `phase` は固定値（`agentic`, `passthrough` など）でしたが、現在はワークフロー定義名（例: `default`, `routing`）が入ります。
+
+### ワークフローモードの種類
+
+| mode 値 | 特徴 |
+|---------|------|
+| `agentic` | planning + task 実行。DriverSetを使用 |
+| `passthrough` | プロンプト加工なしの直接転送 |
+| `rag` | 2 フェーズ。分析 → 生成 |
+| `decision` | 2 フェーズ。判定 → ツール呼び出し |
+| `chat` | ツールなしの会話 |
 
 ## リクエストの JSONL 構造
 
-1 ファイルに通常 4 行:
+1 ファイルに通常 5 行（driver_info エントリを含む）:
 
 | 行 | phase/type | 内容 |
 |----|-----------|------|
 | L1 | `request/in` | クライアントからのリクエスト。`.data.messages` に会話履歴 |
-| L2 | `{workflow}/prompt` | エンジンが構築したプロンプト文字列。`.data.content` |
-| L3 | `{workflow}/llm_response` | LLM の応答。`.data.content`, `.data.toolCalls`, `.data.finishReason` |
-| L4 | `response/out` | クライアントへのレスポンス。`.data.stop_reason`, `.data.content[]` |
+| L2 | `{workflow_name}/driver_info` | ワークフロー実行前のドライバー情報。`.data.model`, `.data.models`（agenticの場合） |
+| L3 | `{workflow_name}/prompt` | エンジンが構築したプロンプト文字列。`.data.content` |
+| L4 | `{workflow_name}/llm_response` | LLM の応答。`.data.content`, `.data.toolCalls`, `.data.finishReason` |
+| L5 | `response/out` | クライアントへのレスポンス。`.data.stop_reason`, `.data.content[]` |
+
+**注**: `{workflow_name}` はワークフロー定義名（例: `default`, `routing`）。以前は固定値（`agentic`, `passthrough` など）でした。
 
 ## メッセージ配列の読み方
 

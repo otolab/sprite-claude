@@ -1,6 +1,6 @@
 import type { AIService } from '@modular-prompt/driver';
 import { compile, createContext, merge, type PromptModule } from '@modular-prompt/core';
-import type { EngineMessage, EngineLogger, WorkflowResult, WorkflowOptions } from '../types.js';
+import type { EngineMessage, EngineLogger, ProcessResult, WorkflowOptions } from '../types.js';
 import { resolveDriver } from '../driver-cache.js';
 import { chatModule } from '../prompts/chat-module.js';
 
@@ -30,7 +30,7 @@ function createSystemPromptModule(systemPrompt: string): PromptModule<Record<str
  * @param systemPrompt - System prompt
  * @param logger - Request logger
  * @param options - Workflow options
- * @returns WorkflowResult (text response)
+ * @returns ProcessResult (text response)
  */
 export async function chatWorkflow(
   aiService: AIService,
@@ -38,7 +38,7 @@ export async function chatWorkflow(
   systemPrompt: string,
   logger: EngineLogger,
   options: WorkflowOptions
-): Promise<WorkflowResult> {
+): Promise<ProcessResult> {
   // Create systemPrompt module and merge with chatModule
   const systemPromptModule = createSystemPromptModule(systemPrompt);
   const mergedModule = merge(systemPromptModule, chatModule);
