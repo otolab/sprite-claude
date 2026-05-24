@@ -44,10 +44,11 @@ async function buildDriverSet(
   aiService: AIService,
   overrides: Record<string, ModelSpec>,
 ): Promise<{ driverSet: DriverSet; defaultModel: string; modelNames: Record<string, string> }> {
-  const [defaultR, chatR, reasoningR, structuredR] = await Promise.all([
+  const [defaultR, chatR, planR, thinkingR, structuredR] = await Promise.all([
     resolveDriver(aiService, [], { preferLocal: true, lenient: true }, overrides.default),
     resolveDriver(aiService, ['chat'], { preferLocal: true, preferFast: true, lenient: false }, overrides.chat),
-    resolveDriver(aiService, ['reasoning'], { preferLocal: true, lenient: false }, overrides.plan || overrides.thinking),
+    resolveDriver(aiService, ['reasoning'], { preferLocal: true, lenient: false }, overrides.plan),
+    resolveDriver(aiService, ['reasoning'], { preferLocal: true, lenient: false }, overrides.thinking),
     resolveDriver(aiService, ['structured'], { preferLocal: true, lenient: false }, overrides.instruct),
   ]);
   if (!defaultR) throw new Error('No suitable model found for default.');
@@ -55,19 +56,31 @@ async function buildDriverSet(
     driverSet: {
       default: defaultR.driver,
       chat: chatR?.driver || defaultR.driver,
-      plan: reasoningR?.driver || defaultR.driver,
+      plan: planR?.driver || thinkingR?.driver || defaultR.driver,
       instruct: structuredR?.driver || defaultR.driver,
-      thinking: reasoningR?.driver || defaultR.driver,
+      thinking: thinkingR?.driver || planR?.driver || defaultR.driver,
     },
     defaultModel: defaultR.model,
     modelNames: {
       default: defaultR.model,
       chat: chatR?.model || defaultR.model,
-      plan: reasoningR?.model || defaultR.model,
+      plan: planR?.model || thinkingR?.model || defaultR.model,
       instruct: structuredR?.model || defaultR.model,
-      thinking: reasoningR?.model || defaultR.model,
+      thinking: thinkingR?.model || planR?.model || defaultR.model,
     },
   };
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Workflow timeout: ${label} did not complete within ${timeoutMs}ms`));
+    }, timeoutMs);
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
 }
 
 /**
@@ -87,6 +100,7 @@ export async function runWorkflow<T>(
   options: WorkflowOptions,
 ): Promise<ProcessResult> {
   const overrides = resolveModelOverrides(def, aiService);
+  const timeoutMs = options.workflowTimeout;
 
   if (def.mode === 'passthrough') {
     const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true }, overrides.default);
@@ -95,8 +109,18 @@ export async function runWorkflow<T>(
       logger.logDriverInfo(options.workflowName || 'passthrough', resolved.model, {});
     }
     const compiled = compile(module, context);
-    return passthroughWorkflow(resolved.driver, compiled, tools, logger,
+    const workflowPromise = passthroughWorkflow(resolved.driver, compiled, tools, logger,
       { ...options, modelName: resolved.model });
+
+    if (!timeoutMs) return workflowPromise;
+    try {
+      return await withTimeout(workflowPromise, timeoutMs, `passthrough(${resolved.model})`);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
+        logger.logError('passthrough', error.message, { model: resolved.model, timeoutMs });
+      }
+      throw error;
+    }
   }
 
   if (def.mode === 'agentic') {
@@ -104,8 +128,18 @@ export async function runWorkflow<T>(
     if (logger.logDriverInfo) {
       logger.logDriverInfo(options.workflowName || 'agentic', defaultModel, { models: modelNames });
     }
-    return agenticWorkflow(driverSet, module, context, tools, logger,
+    const workflowPromise = agenticWorkflow(driverSet, module, context, tools, logger,
       { ...options, modelName: defaultModel });
+
+    if (!timeoutMs) return workflowPromise;
+    try {
+      return await withTimeout(workflowPromise, timeoutMs, `agentic(${defaultModel})`);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
+        logger.logError('agentic', error.message, { defaultModel, models: modelNames, timeoutMs });
+      }
+      throw error;
+    }
   }
 
   throw new Error(`Unsupported workflow mode: ${def.mode}`);

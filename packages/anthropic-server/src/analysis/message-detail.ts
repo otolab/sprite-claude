@@ -115,7 +115,10 @@ export function displayPhaseData(
     if (phaseData.output.model) meta.push(`Model: ${phaseData.output.model}`);
     if (phaseData.output.finishReason) meta.push(`Finish reason: ${phaseData.output.finishReason}`);
     // usage（consumedUsage: 全query合計）
-    if (phaseData.output.usage) {
+    if (phaseData.output.consumedUsage) {
+      const u = phaseData.output.consumedUsage;
+      meta.push(`Usage (total): ${u.promptTokens || 0} in / ${u.completionTokens || 0} out`);
+    } else if (phaseData.output.usage) {
       const u = phaseData.output.usage;
       meta.push(`Usage (total): ${u.promptTokens || 0} in / ${u.completionTokens || 0} out`);
     }
@@ -229,13 +232,25 @@ export function inspectRequest(entries: LogEntry[], seqId: string, filePath?: st
         details.push('has-think');
       }
       // usage情報
-      if (entry.data.usage) {
+      if (entry.data.consumedUsage) {
+        const u = entry.data.consumedUsage;
+        details.push(`tokens=${u.promptTokens || 0}+${u.completionTokens || 0}`);
+      } else if (entry.data.usage) {
         const u = entry.data.usage;
         details.push(`tokens=${u.promptTokens || 0}+${u.completionTokens || 0}`);
       }
       // エラー件数
       if (entry.data.errors?.length) {
         details.push(`errors=${entry.data.errors.length}`);
+      }
+      // executionLog（agenticProcess内部タスク）
+      if (entry.data.taskTypeCounts && Object.keys(entry.data.taskTypeCounts).length > 0) {
+        const counts = Object.entries(entry.data.taskTypeCounts)
+          .map(([type, count]) => `${type}:${count}`)
+          .join(',');
+        details.push(`tasks=${entry.data.executionLog?.length || 0}(${counts})`);
+      } else if (entry.data.executionLog?.length) {
+        details.push(`tasks=${entry.data.executionLog.length}`);
       }
       // ドライバログ件数
       if (entry.data.logEntries?.length) {

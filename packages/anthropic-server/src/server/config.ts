@@ -59,6 +59,9 @@ export interface ServerConfig {
   workflows?: Record<string, WorkflowDefinition>;
   modelMapping?: Record<string, string>;
   routingWorkflow?: string;
+  defaultOptions?: Record<string, unknown>;
+  /** ワークフロー実行のタイムアウト（ミリ秒）。デフォルト: 300000 (5分) */
+  workflowTimeout?: number;
 }
 
 /**
@@ -81,7 +84,9 @@ export function loadConfig(configPath: string): ServerConfig {
   try {
     const content = readFileSync(expandedPath, 'utf8');
     const config = yaml.load(content) as ServerConfig;
-    return config || {};
+    if (!config) return {};
+
+    return config;
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
       console.warn(`Config file not found: ${expandedPath}, using defaults`);

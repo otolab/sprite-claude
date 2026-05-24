@@ -58,6 +58,9 @@ export interface AnthropicServerOptions {
   workflows?: Record<string, WorkflowDefinition>;
   modelMapping?: Record<string, string>;
   routingWorkflow?: string;
+  defaultOptions?: Record<string, unknown>;
+  /** ワークフロー実行のタイムアウト（ミリ秒）。デフォルト: 300000 (5分) */
+  workflowTimeout?: number;
 }
 
 // Extend Fastify instance type

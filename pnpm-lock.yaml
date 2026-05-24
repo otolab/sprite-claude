@@ -25,8 +25,8 @@ importers:
         specifier: 0.2.2
         version: 0.2.2
       '@modular-prompt/driver':
-        specifier: 0.11.1
-        version: 0.11.1(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.12.0
+        version: 0.12.0(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils':
         specifier: latest
         version: 0.3.3
@@ -53,8 +53,8 @@ importers:
         version: 3.25.0(zod@3.25.76)
     devDependencies:
       '@modular-prompt/experiment':
-        specifier: ^0.4.10
-        version: 0.4.10(ws@8.20.0)
+        specifier: ^0.4.32
+        version: 0.4.32(ws@8.20.0)
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -86,11 +86,11 @@ importers:
         specifier: 0.2.2
         version: 0.2.2
       '@modular-prompt/driver':
-        specifier: 0.11.1
-        version: 0.11.1(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.12.0
+        version: 0.12.0(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/process':
-        specifier: 0.3.9
-        version: 0.3.9(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.5.0
+        version: 0.5.0(ws@8.20.0)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -482,34 +482,24 @@ packages:
     resolution: {integrity: sha512-sn9O+mmd5bQy8XiRVD10f0KbzuGYdU/Dd6Loe0kQAc4JckLwVddsjVsGod8Dfvm6x+OX1Ww2dVLKmVXXWXo5Fw==}
     engines: {node: '>=18.0.0'}
 
-  '@modular-prompt/driver@0.10.6':
-    resolution: {integrity: sha512-MO22dvTtZLTtsreQEhD728nvks63/JOAlhfdD/OAii9NJsEnflK0lmkpeAqGBWRfPurnRaX/6bz6FU0bERd2oA==}
+  '@modular-prompt/driver@0.12.0':
+    resolution: {integrity: sha512-VjctdTZAlKAfMj/tO6lQf9kZon1B7sxwsBor1eVaNe/4LelhMHoAVKjrzfE78l/dnfgy8DFEImNDgxNu7K9Urw==}
 
-  '@modular-prompt/driver@0.11.0':
-    resolution: {integrity: sha512-xlrJB8gqLrWvKYB03mIkAnmDoxfZ6IzjnhAnjATqYwwp4MFSlNcG8Ql2wcX9MmZaHvMCs9Rmtbv1m9VLhqJolQ==}
-
-  '@modular-prompt/driver@0.11.1':
-    resolution: {integrity: sha512-Pm/cHfY7XNaR56qsK8CrYdojWpK0XOcugTaaZBZ0vlYc7nXmLLhtPFZKl5uHzYKverb2BAmaJkc4yawgtwOdww==}
-
-  '@modular-prompt/experiment@0.4.10':
-    resolution: {integrity: sha512-l+XWu5W8+jSN6L7qAC66L2X1U0i3aTQp599klxwVLLVkAC2Jnc1bY2BtA9Utf5cZHgiaOIGP5JGK7r568I7xkw==}
+  '@modular-prompt/experiment@0.4.32':
+    resolution: {integrity: sha512-AK13dqxxr2DZ6OulXh8HFDQtd6QTBDHl0A4VGrm7ffF61OHhH0Sn0v7Jp8g6OCr/btxEFd0lJcccRhi7mOuG6w==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@modular-prompt/process@0.3.7':
-    resolution: {integrity: sha512-SQ0PIk2l/y3WPAk7NP15W6QbuJZOMYCfh54k+6C5Ac6mF/FfdLnjw+sD0vXR5vvMvyLhWOVr06QtQqZcf5i0nQ==}
+  '@modular-prompt/process@0.5.0':
+    resolution: {integrity: sha512-r+5GidJ3uTvTxbgnNGjrMj0dK8mN3Kq/AJ/0dlepJxhPcHyC6v/w7GD/2MMZhkQUIm+RTcF5DxHR0qOJGWlp3Q==}
     engines: {node: '>=18.0.0'}
-
-  '@modular-prompt/process@0.3.9':
-    resolution: {integrity: sha512-ImM1KiUEE7G2uYUOR5AD46R0F1q2r+qrbPHAWdMCHWPORbREXDTatHoq2RqbC9r3pM/qNvJEQmIJvfbZWwlUxg==}
-    engines: {node: '>=18.0.0'}
-
-  '@modular-prompt/utils@0.3.2':
-    resolution: {integrity: sha512-VaqCjw8HIFhmw+KEgTLJnVGFMZ8a6r3q8WTz5Jh9b1BheEsq66xXFeQA/4zjhR9PTxiwOvPj0N6wjdeoqC/g7A==}
-    engines: {node: '>=16.0.0'}
 
   '@modular-prompt/utils@0.3.3':
     resolution: {integrity: sha512-jddL74gGqVh9gESjbgre4UW2Z9gYXedRZsfXIfKYIwJZb8L89Wo59NOobxM0LWJniRuevW5DwiXdViWJqxa/ug==}
+    engines: {node: '>=16.0.0'}
+
+  '@modular-prompt/utils@0.3.4':
+    resolution: {integrity: sha512-7m0vdHHITNCc4z2/8xyYCe6gutECj8uLICPSE6JI20imu3sgeWtxu6NLHajueQ4RmaZRgZtEX6mnGipdnuYfgA==}
     engines: {node: '>=16.0.0'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -561,56 +551,67 @@ packages:
     resolution: {integrity: sha512-k9oD15soC/Ln6d2Wv/JOFPzZXIAIFLp6B+i14KhxAfnq76ajt0EhYc5YPeX6W1xJkAdItcVT+JhKl1QZh44/qw==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.53.3':
     resolution: {integrity: sha512-vTNlKq+N6CK/8UktsrFuc+/7NlEYVxgaEgRXVUVK258Z5ymho29skzW1sutgYjqNnquGwVUObAaxae8rZ6YMhg==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.53.3':
     resolution: {integrity: sha512-RGrFLWgMhSxRs/EWJMIFM1O5Mzuz3Xy3/mnxJp/5cVhZ2XoCAxJnmNsEyeMJtpK+wu0FJFWz+QF4mjCA7AUQ3w==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.53.3':
     resolution: {integrity: sha512-kASyvfBEWYPEwe0Qv4nfu6pNkITLTb32p4yTgzFCocHnJLAHs+9LjUu9ONIhvfT/5lv4YS5muBHyuV84epBo/A==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.53.3':
     resolution: {integrity: sha512-JiuKcp2teLJwQ7vkJ95EwESWkNRFJD7TQgYmCnrPtlu50b4XvT5MOmurWNrCj3IFdyjBQ5p9vnrX4JM6I8OE7g==}
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-gnu@4.53.3':
     resolution: {integrity: sha512-EoGSa8nd6d3T7zLuqdojxC20oBfNT8nexBbB/rkxgKj5T5vhpAQKKnD+h3UkoMuTyXkP5jTjK/ccNRmQrPNDuw==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-gnu@4.53.3':
     resolution: {integrity: sha512-4s+Wped2IHXHPnAEbIB0YWBv7SDohqxobiiPA1FIWZpX+w9o2i4LezzH/NkFUl8LRci/8udci6cLq+jJQlh+0g==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.53.3':
     resolution: {integrity: sha512-68k2g7+0vs2u9CxDt5ktXTngsxOQkSEV/xBbwlqYcUrAVh6P9EgMZvFsnHy4SEiUl46Xf0IObWVbMvPrr2gw8A==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.53.3':
     resolution: {integrity: sha512-VYsFMpULAz87ZW6BVYw3I6sWesGpsP9OPcyKe8ofdg9LHxSbRMd7zrVrr5xi/3kMZtpWL/wC+UIJWJYVX5uTKg==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.53.3':
     resolution: {integrity: sha512-3EhFi1FU6YL8HTUJZ51imGJWEX//ajQPfqWLI3BQq4TlvHy4X0MOr5q3D2Zof/ka0d5FNdPwZXm3Yyib/UEd+w==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.53.3':
     resolution: {integrity: sha512-eoROhjcc6HbZCJr+tvVT8X4fW3/5g/WkGvvmwz/88sDtSJzO7r/blvoBDgISDiCjDRZmHpwud7h+6Q9JxFwq1Q==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-openharmony-arm64@4.53.3':
     resolution: {integrity: sha512-OueLAWgrNSPGAdUdIjSWXw+u/02BRTcnfw9PN41D2vq/JSEPnJnVuBgw18VkN8wcd4fjUs+jFHVM4t9+kBSNLw==}
@@ -1581,6 +1582,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   vite-node@1.6.1:
@@ -1947,14 +1949,14 @@ snapshots:
 
   '@modular-prompt/core@0.2.2': {}
 
-  '@modular-prompt/driver@0.10.6(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.12.0(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
       '@google-cloud/vertexai': 1.10.0
       '@google/genai': 1.34.0
       '@modular-prompt/core': 0.2.2
-      '@modular-prompt/utils': 0.3.2
+      '@modular-prompt/utils': 0.3.4
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
@@ -1968,54 +1970,12 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/driver@0.11.0(ws@8.20.0)(zod@3.25.76)':
-    dependencies:
-      '@anthropic-ai/sdk': 0.61.0
-      '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
-      '@google-cloud/vertexai': 1.10.0
-      '@google/genai': 1.34.0
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/utils': 0.3.3
-      '@types/js-yaml': 4.0.9
-      google-auth-library: 9.15.1
-      js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@modelcontextprotocol/sdk'
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-      - ws
-      - zod
-
-  '@modular-prompt/driver@0.11.1(ws@8.20.0)(zod@3.25.76)':
-    dependencies:
-      '@anthropic-ai/sdk': 0.61.0
-      '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
-      '@google-cloud/vertexai': 1.10.0
-      '@google/genai': 1.34.0
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/utils': 0.3.3
-      '@types/js-yaml': 4.0.9
-      google-auth-library: 9.15.1
-      js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@modelcontextprotocol/sdk'
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-      - ws
-      - zod
-
-  '@modular-prompt/experiment@0.4.10(ws@8.20.0)':
+  '@modular-prompt/experiment@0.4.32(ws@8.20.0)':
     dependencies:
       '@modular-prompt/core': 0.2.2
-      '@modular-prompt/driver': 0.10.6(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/process': 0.3.7(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/utils': 0.3.2
+      '@modular-prompt/driver': 0.12.0(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/process': 0.5.0(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/utils': 0.3.4
       commander: 12.1.0
       jiti: 2.6.1
       yaml: 2.8.2
@@ -2028,11 +1988,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@modular-prompt/process@0.3.7(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.5.0(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@modular-prompt/core': 0.2.2
-      '@modular-prompt/driver': 0.10.6(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/utils': 0.3.2
+      '@modular-prompt/driver': 0.12.0(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/utils': 0.3.4
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2042,28 +2002,14 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/process@0.3.9(ws@8.20.0)(zod@3.25.76)':
-    dependencies:
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/driver': 0.11.0(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/utils': 0.3.3
-    transitivePeerDependencies:
-      - '@modelcontextprotocol/sdk'
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-      - ws
-      - zod
-
-  '@modular-prompt/utils@0.3.2':
+  '@modular-prompt/utils@0.3.3':
     dependencies:
       '@modular-prompt/core': 0.2.2
       js-yaml: 4.1.1
       jsonrepair: 3.13.1
       merge-stream: 2.0.0
 
-  '@modular-prompt/utils@0.3.3':
+  '@modular-prompt/utils@0.3.4':
     dependencies:
       '@modular-prompt/core': 0.2.2
       js-yaml: 4.1.1

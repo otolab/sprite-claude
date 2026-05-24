@@ -2,17 +2,46 @@
 
 ## 概要
 
-`sprite-claude` の新しいワークフローモード `agentic` は、`@modular-prompt/process@0.2.0` の `agenticProcess` を使用した会話応答機能です。
+`sprite-claude` の新しいワークフローモード `agentic` は、`@modular-prompt/process@0.4.15` の `agenticProcess` を使用した会話応答機能です。
 
 - **処理層**: `passthrough` モードと同様に `handleMessages` から直接呼び出される
 - **有効化**: `config.yaml` で `workflow: { mode: agentic }` を設定
 - **特徴**: タスク管理機能を持つプロセス実行エンジンを利用し、より構造化された応答生成が可能
+- **Planning**: `enablePlanning: true` でタスク設計を自動化
 
 ## アーキテクチャと処理フロー
 
-agentic モードは以下の5つのステップで処理を行います:
+agentic モードは以下の6つのステップで処理を行います:
 
-### 1. Anthropic メッセージ変換
+### 1. リクエストからpromptModuleへの変換
+
+HTTPリクエスト（Anthropic Messages API形式）がagenticProcessに渡るまでの詳細な変換フロー:
+
+#### 1.1 handleMessages（`packages/anthropic-server/src/messages/index.ts`）
+
+1. **system フィールドの抽出**
+   - `request.system`（Claude Codeのsystemフィールド） → `extractSystemText()` → `module.instructions`
+
+2. **system-reminder の抽出**
+   - `request.messages` → `extractSystemReminders()`
+   - `<system-reminder>` タグで囲まれたセクション → `module.materials`
+   - メッセージ本体（system-reminder除去後） → 次の変換へ
+
+3. **agenticPrompts の読み込み**（config.yaml指定がある場合）
+   - `loadPromptModules()` で baseModule を構築
+   - materials/messages を追加
+
+#### 1.2 agenticWorkflow（`packages/engine/src/workflows/agentic.ts`）
+
+1. **PromptModule のコンパイル**
+   - `compile(module, context)` で PromptModule を CompiledPrompt に変換
+   - DynamicContent関数を実行し静的な値に変換
+
+2. **agenticProcess への投入**
+   - `agenticProcess(driverInput, module, context, agenticOptions)` に渡す
+   - `enablePlanning: true` が設定される
+
+### 2. Anthropic メッセージ変換
 
 `convertToElements()` ヘルパー関数を使用して、Anthropic 形式のメッセージを `MessageElement[]` に変換します。この関数は passthrough モードと共通で使用されています。
 
@@ -21,7 +50,7 @@ agentic モードは以下の5つのステップで処理を行います:
 - `tool_result` ブロック → `ToolResultMessageElement`
 - テキストメッセージ → `MessageElement` (role: user/assistant)
 
-### 2. PromptModule 構築
+### 3. PromptModule 構築
 
 agenticProcess に渡す `PromptModule<AgenticWorkflowContext>` を構築します:
 
@@ -38,7 +67,7 @@ const module: PromptModule<AgenticWorkflowContext> = {
 - `instructions`: Anthropic リクエストの `system` フィールドから抽出したテキスト
 - `messages`: 変換された会話履歴（tool_use/tool_result を含む）
 
-### 3. AgenticWorkflowContext 構築
+### 4. AgenticWorkflowContext 構築
 
 実行コンテキストを構築します:
 
@@ -52,9 +81,9 @@ const context: AgenticWorkflowContext = {
 **objective**: 全タスクに instruction として渡される主要な目的。簡潔な指示文を設定する（ユーザーメッセージは module.messages に含まれるため重複不要）。
 
 **taskList**:
-- `output` タスク1つのみを設定（`enablePlanning: false` のため）
+- `enablePlanning: true` のため、初期タスクリストは空（bootstrap時にplanningタスクが生成される）
 
-### 4. agenticWorkflow() 呼び出し
+### 5. agenticWorkflow() 呼び出し
 
 engine 層の `agenticWorkflow` 関数を呼び出します:
 
@@ -75,11 +104,12 @@ const result = await agenticWorkflow(
 - DriverSetを渡すことで、役割ごとに異なるモデルを使用可能
 
 内部では以下を実行:
-1. `EngineTool[]` → `ToolSpec[]` への変換 (`toToolSpecs`)
+1. `EngineTool[]` → `ToolDefinition[]` への変換 (`toToolDefinitions`)
+   - `@modular-prompt/process@0.4.14` 以降、`ToolSpec[]` から `ToolDefinition[]`（`@modular-prompt/driver`）に変更
 2. `agenticProcess` の実行（`enablePlanning: true`）
 3. `result.context.executionLog` から `pendingToolCalls` をチェック
 
-### 5. 結果変換
+### 6. 結果変換
 
 `toContentBlocks()` で Anthropic 形式の `ContentBlock[]` に変換します:
 
@@ -106,7 +136,7 @@ Anthropic 形式のメッセージを `convertToElements` で変換する際:
 ### agenticProcess 内部
 
 **外部ツール（EngineTool[]）の扱い**:
-- `toToolSpecs()` で `ToolSpec[]` に変換して `agenticProcess` に渡す
+- `toToolDefinitions()` で `ToolDefinition[]`（`@modular-prompt/driver`）に変換して `agenticProcess` に渡す
 - handler は no-op（`async () => ({})`）- 実行はせず、定義のみを渡す
 
 **agenticProcess の動作**:
@@ -114,7 +144,7 @@ Anthropic 形式のメッセージを `convertToElements` で変換する際:
 - LLM が外部ツールを呼び出した場合:
   - `queryWithTools` はループを即座に停止
   - `pendingToolCalls` として返す（実行はしない）
-- builtin ツール（`__` prefix、例: `__insert_tasks`, `__time`）のみ内部で実行
+- builtin ツール（`__` prefix、例: `__register_task`, `__time`）のみ内部で実行
 
 ### Outgoing: agenticProcess → Anthropic
 
@@ -129,19 +159,62 @@ Anthropic 形式のメッセージを `convertToElements` で変換する際:
 
 ## agenticProcess のタスク実行モデル
 
-現在の実装では `enablePlanning: false` を使用しています:
+現在の実装では `enablePlanning: true` を使用しています:
 
 ### Bootstrap 段階
-- `output` タスク1つのみ生成される（planning タスクは生成されない）
-- `context.taskList` には `[{ taskType: 'output', instruction: '会話に応答して' }]` を設定済み
+- `planning` タスクが最初に生成される
+- `context.taskList` は空（plannerがタスクを登録する）
+
+### Planning タスクの実行
+
+#### plannerへのプロンプト変換フロー
+
+1. **agenticProcess内部**（`@modular-prompt/process` の `agentic-workflow.js`）
+   - `bootstrap()` で `enablePlanning: true` の場合、最初に `planning` タスクを生成
+   - `executeTask()` でplanningタスクを実行する際:
+     - `workflowBase = { terms: userModule.terms }` （元のinstructions/materials/messagesは含まない）
+     - `merge(workflowBase, planningModule)` でplanning専用のPromptModuleとマージ
+
+2. **planningModule**（`@modular-prompt/process` の `task-types/planning.js`）
+   - `materials` フィールドはDynamicContent関数
+   - `ctx.userModule`（元のPromptModule全体）を `distribute()` → `formatCompletionPrompt()` でテキスト化
+   - 結果を `{ type: 'material', title: 'Original Request', content: text }` としてplannerに提供
+   - つまり**元のリクエスト全体をplannerに「分析対象資料」として渡す**設計
+
+#### plannerが見るプロンプトの構造
+
+```
+# Instructions（planner自身の指示）
+  - You are the planner. Workflow design is your responsibility.
+  - Task Type Guide, Planning Theory, Common Patterns 等
+
+# Data
+  ## Original Request（分析対象 = formatCompletionPromptでテキスト化されたuserModule）
+    # Instructions        ← ★ 外側と同じヘッダレベル
+      request.systemの内容（Claude Codeのシステムプロンプト等）
+    # Data
+      ## Messages
+        ユーザーメッセージ
+    # Output
+
+# Output（cue）
+  Analyze the prompt and register tasks by calling `__register_task`.
+```
+
+**既知の問題**: Original Request内の `# Instructions` と外側のplanner指示 `# Instructions` が同じMarkdownヘッダレベルで衝突し、小規模モデル（Gemma 4等）がどちらに従うか混乱する場合がある。対策としてOriginal Requestの内容をblockquote（`>`）で囲む方法を検討中。
+
+#### plannerのツール呼び出し
+
+- `__register_task` builtin ツールを呼び出してタスクを登録
+- タスク登録の履歴は `task_registration` ログエントリとして記録される（後述）
 
 ### Output タスクの実行
 - **userModule 全体**（objective, instructions, messages すべて）が使用される
 - これにより、会話履歴とシステムプロンプトを含む完全なコンテキストで応答生成が可能
 
 ### 他のタスクタイプ
-- planning, toolCall, think 等のタスクでは objective/terms のみが使用される
-- 現在は `output` タスクのみのため、これらは実行されない
+- think, act, verify 等のタスクでは objective/terms のみが使用される
+- `withXxx` フラグ（`withMessages`, `withMaterials` 等）で追加データの可視性を制御可能
 
 ## 型の対応関係
 
@@ -239,8 +312,30 @@ routingWorkflow: routing
 
 これにより、`request.model`に応じて適切なワークフローが選択され、役割ごとに最適なモデルが使用されます。
 
+## ログとデバッグ
+
+### task_registration ログ
+
+planningフェーズで `__register_task` 呼び出しを抽出し、専用の `task_registration` ログエントリとして記録します。
+
+**実装**（`packages/tuning/analysis/extract-log.ts`）:
+- `executionLog` からplanningフェーズのエントリを抽出
+- `toolCalls` から `__register_task` 呼び出しを検出
+- `taskType`, `instruction`, オプション（`withMessages`, `driverRole` 等）を抽出
+- 専用のログエントリとして記録
+
+**用途**:
+- plannerがどのようなタスクシーケンスを設計したかを確認
+- タスク設計の問題を診断
+- plannerプロンプトの改善
+
+### executionLog の構造
+
+agenticProcessは各タスクの実行を `context.executionLog` に記録します。詳細は [logging.md](logging.md) を参照してください。
+
 ## 今後の拡張可能性
 
-- `enablePlanning: true` にすることで、planning タスクを使った複雑なタスク分解が可能
+- plannerプロンプトの改善（Original Requestのフォーマット等）
 - カスタムタスクタイプの追加
-- builtin ツールの活用（`__insert_tasks`, `__time` 等）
+- builtin ツールの活用（`__time`, `__update_task` 等）
+- 再計画（`__replan`）の活用

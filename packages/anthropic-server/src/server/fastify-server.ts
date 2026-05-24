@@ -114,21 +114,22 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
 
   // Initialize AIService
   let aiService: AIService;
+  const defaultOpts = {
+    temperature: 0.7,
+    maxTokens: 1024,
+    ...options.defaultOptions,
+  };
 
   if (options.models && options.models.length > 0) {
-    // New configuration: Use AIService with multiple models
     const aiServiceConfig: ApplicationConfig = {
       models: options.models,
       drivers: options.drivers || {},
-      defaultOptions: {
-        temperature: 0.7,
-        maxTokens: 1024,
-      },
+      defaultOptions: defaultOpts as ApplicationConfig['defaultOptions'],
     };
 
     aiService = new AIService(aiServiceConfig);
     const activeCount = options.models.filter(m => !m.disabled).length;
-    serverLogger.info('startup', `AIService initialized with ${activeCount}/${options.models.length} models (active/total)`);
+    serverLogger.info('startup', `AIService initialized with ${activeCount}/${options.models.length} models (active/total), defaultOptions: ${JSON.stringify(defaultOpts)}`);
   } else {
     // Legacy configuration: Single MLX model
     const model = options.model || 'mlx-community/gemma-2-2b-it-4bit';
@@ -144,10 +145,7 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
       drivers: {
         mlx: options.drivers?.mlx || {},
       },
-      defaultOptions: {
-        temperature: 0.7,
-        maxTokens: 1024,
-      },
+      defaultOptions: defaultOpts as ApplicationConfig['defaultOptions'],
     };
 
     aiService = new AIService(aiServiceConfig);
@@ -207,6 +205,7 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
         options.routingWorkflow,
         serverLogger,
         options.configDir,
+        options.workflowTimeout ?? 300_000,
       );
 
       // Pseudo-streaming: wrap completed response as SSE events
@@ -220,6 +219,16 @@ export async function createServer(options: AnthropicServerOptions = {}): Promis
       const message = error instanceof Error ? error.message : 'Unknown error';
 
       // Map upstream errors to Anthropic-compatible error responses
+      if (message.startsWith('Workflow timeout:')) {
+        reply.status(408);
+        return {
+          type: 'error',
+          error: {
+            type: 'api_error',
+            message,
+          },
+        };
+      }
       if (message.includes('503') || message.includes('UNAVAILABLE') || message.includes('high demand')) {
         reply.status(529);
         return {

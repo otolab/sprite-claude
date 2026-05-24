@@ -2,15 +2,56 @@
 
 ## 概要
 
-このドキュメントは、`@modular-prompt/process@0.3.4` の `agenticProcess` の内部処理フローを記録します。今後の修正・リファクタリングの参照資料として使用します。
+このドキュメントは、`@modular-prompt/process@0.4.15` の `agenticProcess` の内部処理フローを記録します。今後の修正・リファクタリングの参照資料として使用します。
 
-**バージョン**: `@modular-prompt/process@0.3.4`（2026-03-30時点）
+**バージョン**: `@modular-prompt/process@0.4.15`（2026-04-13時点）
+
+**変更履歴**:
+- 0.3.4 → 0.4.14: `ToolSpec[]` → `ToolDefinition[]`（`@modular-prompt/driver`）への変更
+- 0.4.14 → 0.4.15: マイナーバグフィックス
 
 sprite-claudeのagenticモードでは、anthropic-serverがClaude Codeからのリクエストを受け取り、PromptModuleを構築してagenticProcessに渡します。agenticProcessはタスクベースのワークフローで、各タスクごとにプロンプトを再構成してLLMに問い合わせます。
 
-## PromptModule投入時の構造（anthropic-server側）
+## リクエストからPromptModuleへの変換フロー
 
-anthropic-serverの`messages/index.ts`（L350-367）で構築されるPromptModule:
+### 1. HTTPリクエストの受信（anthropic-server）
+
+Claude CodeからのAnthropic Messages API形式のリクエストを受信:
+
+```json
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "system": "You are Claude Code...",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>...</system-reminder>\n\nユーザーメッセージ"
+        }
+      ]
+    }
+  ],
+  "tools": [...]
+}
+```
+
+### 2. handleMessages での変換（`messages/index.ts`）
+
+#### 2.1 systemフィールドの抽出
+
+`request.system` → `extractSystemText()` → `systemPromptText`
+
+#### 2.2 system-reminderの抽出
+
+`request.messages` → `extractSystemReminders()`:
+- `<system-reminder>` タグで囲まれたセクション → `systemReminders[]`
+- メッセージ本体（system-reminder除去後） → `convertToElements()` へ
+
+#### 2.3 PromptModule構築
+
+anthropic-serverの`messages/index.ts`で構築されるPromptModule:
 
 ```typescript
 const module: PromptModule = {
@@ -57,10 +98,10 @@ const module: PromptModule = {
    };
    ```
 
-3. **初期タスクリストの生成**（`bootstrap`関数、L48-64）:
-   - `enablePlanning=true`: `planning` タスクから開始
+3. **初期タスクリストの生成**（`bootstrap`関数）:
+   - `enablePlanning=true`: `planning` タスクから開始（taskListは空、plannerが登録する）
    - `enablePlanning=false`: `output` タスクのみ
-   - sprite-claudeでは `enablePlanning: true`（`agentic.ts` L76）
+   - sprite-claudeでは `enablePlanning: true`
 
 ### 2. タスクループ（L174-207）
 
@@ -94,7 +135,7 @@ const workflowBase = task.taskType === 'output'
 
 この分岐により、outputタスクでは元のinstructions、materials、messagesが**直接**プロンプトに含まれますが、他のタスクでは含まれません。
 
-#### 3.2 タスクタイプごとのプロンプト再構成（L106-117）
+#### 3.2 タスクタイプごとのプロンプト再構成
 
 **planningタスク**:
 ```typescript
@@ -104,11 +145,36 @@ const planningMerged = hasExistingDeliverables
 resolved = resolve(planningMerged, context);
 ```
 
-- workflowBase = `{ objective, terms }` のみ
+- workflowBase = `{ terms: userModule.terms }` のみ
 - `taskConfig.module`（planningModule）をmerge
-- planningModuleの`materials`セクション（L111-128, planning.js）で、userModule全体を`distribute()` → `formatCompletionPrompt()`でテキスト化
-- "Prompt to analyze" というmaterialとして提供
+- planningModuleの`materials`セクション（planning.js）で、userModule全体を`distribute()` → `formatCompletionPrompt()`でテキスト化
+- "Original Request" というmaterialとして提供
 - つまり、元のinstructions、materials、messagesは**資料として**planningドライバーに渡される
+
+**plannerが見るプロンプト構造**:
+```
+# Instructions（planner自身の指示）
+  - You are the planner. Workflow design is your responsibility.
+  - Task Type Guide, Planning Theory, Common Patterns 等
+
+# Data
+  ## Original Request（分析対象）
+    # Instructions        ← ★ 外側と同じヘッダレベル
+      request.systemの内容（Claude Codeのシステムプロンプト等）
+    # Data
+      ## Messages
+        ユーザーメッセージ
+    # Output
+
+# Output（cue）
+  Analyze the prompt and register tasks by calling `__register_task`.
+```
+
+**既知の問題**: Original Request内の `# Instructions` と外側のplanner指示 `# Instructions` が同じMarkdownヘッダレベルで衝突する。小規模モデルが混乱する場合がある。
+
+**plannerのタスク登録**:
+- `__register_task` builtin ツールを呼び出してタスクを登録
+- タスク登録の履歴は `task_registration` ログエントリとして記録される（`extract-log.ts` が抽出）
 
 **outputタスク**:
 - workflowBase = userModule全体
@@ -230,7 +296,7 @@ const driverSet: DriverSet = {
 |---------|------|
 | `packages/anthropic-server/src/messages/index.ts` | PromptModule構築、system-reminder抽出 |
 | `packages/engine/src/workflows/agentic.ts` | agenticWorkflow関数、DriverSet設定 |
-| `packages/engine/package.json` | `@modular-prompt/process@0.3.4` 依存定義 |
+| `packages/engine/package.json` | `@modular-prompt/process@0.4.15` 依存定義 |
 
 ### @modular-prompt/process側
 
@@ -242,6 +308,10 @@ const driverSet: DriverSet = {
 | `dist/workflows/agentic-workflow/task-types/output.js` | outputModule |
 | `dist/workflows/agentic-workflow/task-types/execution-tasks.js` | 実行タスクのファクトリとEXECUTION_TASK_DEFS |
 | `dist/workflows/agentic-workflow/types.js` | DEFAULT_DRIVER_ROLE、DEFAULT_DATA_OPTIONS |
+
+**重要な変更（@modular-prompt/process 0.4.14）**:
+- `AgenticWorkflowOptions.tools` の型が `ToolSpec[]` から `ToolDefinition[]`（`@modular-prompt/driver`）に変更
+- sprite-claude側の `agentic.ts` では `toToolSpecs` → `toToolDefinitions` に対応済み
 
 ## 関連ドキュメント
 

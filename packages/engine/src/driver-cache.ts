@@ -17,6 +17,9 @@ export interface ResolvedDriver {
  */
 const cache = new Map<string, AIDriver>();
 
+/** In-flight driver creation promises to prevent duplicate concurrent creation */
+const inflight = new Map<string, Promise<AIDriver>>();
+
 /**
  * Resolve a driver for the given capabilities.
  *
@@ -50,10 +53,32 @@ export async function resolveDriver(
   const cached = cache.get(key);
   if (cached) return { driver: cached, model: spec.model, provider: spec.provider, isNew: false };
 
-  const driver = await aiService.createDriver(spec);
-  cache.set(key, driver);
-  console.log(`[engine] Driver resolved: ${key} (capabilities: [${capabilities.join(', ')}])`);
-  return { driver, model: spec.model, provider: spec.provider, isNew: true };
+  // Deduplicate concurrent creation for the same key
+  const pending = inflight.get(key);
+  if (pending) {
+    const driver = await pending;
+    return { driver, model: spec.model, provider: spec.provider, isNew: false };
+  }
+
+  const promise = aiService.createDriver(spec);
+  inflight.set(key, promise);
+  try {
+    const driver = await promise;
+
+    // Apply per-model defaultOptions from metadata
+    // AIDriver interface lacks defaultOptions but concrete drivers (VertexAI, etc.) support it
+    const modelDefaults = (spec.metadata as Record<string, unknown> | undefined)?.defaultOptions;
+    if (modelDefaults && typeof modelDefaults === 'object') {
+      const d = driver as unknown as { defaultOptions?: Record<string, unknown> };
+      d.defaultOptions = { ...d.defaultOptions, ...modelDefaults as Record<string, unknown> };
+    }
+
+    cache.set(key, driver);
+    console.log(`[engine] Driver resolved: ${key} (capabilities: [${capabilities.join(', ')}])`);
+    return { driver, model: spec.model, provider: spec.provider, isNew: true };
+  } finally {
+    inflight.delete(key);
+  }
 }
 
 /**
@@ -61,4 +86,5 @@ export async function resolveDriver(
  */
 export function clearDriverCache(): void {
   cache.clear();
+  inflight.clear();
 }
