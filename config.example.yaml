@@ -6,8 +6,8 @@
 # ========================================
 # シンプルな設定。ローカルMLXモデルのみを使用します。
 
-mlx:
-  model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+# mlx:
+#   model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
 server:
   port: 4000
@@ -27,41 +27,55 @@ runtime:
 # 複数のモデルを登録し、リクエストに応じて最適なモデルを動的に選択します。
 # 以下の設定を有効にする場合は、上記の mlx セクションをコメントアウトしてください。
 
-# models:
-#   # ローカルMLXモデル
-#   - model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
-#     provider: "mlx"
-#     capabilities: ["local", "fast"]
-#     priority: 10
-#     enabled: true
-#
-#   # Vertex AI Gemini
-#   - model: "gemini-2.0-flash-001"
-#     provider: "vertexai"
-#     capabilities: ["fast", "japanese", "reasoning"]
-#     priority: 20
-#     enabled: true
+models:
+  # ローカルMLXモデル
+  - model: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    provider: "mlx"
+    capabilities: ["local", "fast"]
+    priority: 10
+    # disabled: true  # モデルを無効にするにはこの行を有効化
 
-# drivers:
-#   mlx: {}
-#   vertexai:
-#     project: "your-gcp-project-id"  # GCPプロジェクトIDを設定
-#     location: "us-central1"          # リージョンを設定
+  # Vertex AI Gemini
+  - model: "gemini-2.0-flash-001"
+    provider: "vertexai"
+    capabilities: ["fast", "japanese", "reasoning"]
+    priority: 20
 
-# selection:
-#   preferLocal: true   # ローカルモデルを優先
-#   preferFast: true    # 高速なモデルを優先
-#   lenient: true       # 条件を満たすモデルがない場合は緩和
-#   requiredCapabilities: []  # 常に必要な能力（例: ["tools"]）
+drivers:
+  mlx: {}
+  vertexai:
+    project: "your-gcp-project-id"  # GCPプロジェクトIDを設定
+    location: "us-central1"          # リージョンを設定
 
-# server:
-#   port: 4000
-#   host: "0.0.0.0"
+selection:
+  preferLocal: true   # ローカルモデルを優先
+  preferFast: true    # 高速なモデルを優先
+  lenient: true       # 条件を満たすモデルがない場合は緩和
+  requiredCapabilities: []  # 常に必要な能力（例: ["tools"]）
 
-# logging:
-#   level: "info"
-#   request_response_level: "full"
+# ========================================
+# ワークフロー設定例
+# ========================================
+# ワークフローを定義し、リクエストに応じて異なる処理フローを適用します。
+# 詳細は docs/architecture/workflow-config.md を参照してください。
 
-# runtime:
-#   pid_dir: "~/.sprite-claude/run"
-#   log_dir: "~/.sprite-claude/logs"
+workflows:
+  default: # workflowName: "default"
+    mode: "passthrough"
+    models:
+      default: "mlx-community/gemma-2-2b-it-4bit"
+  pro: # workflowName: "pro"
+    mode: "agentic"
+    models:
+      default: "mlx-community/gemma-2-2b-it-4bit"
+      chat: "vertexai:gemini-2.0-flash-001"
+      plan: "vertexai:gemini-2.0-flash-001"
+      thinking: "vertexai:gemini-2.0-flash-001"
+      instruct: "vertexai:gemini-2.0-flash-001"
+
+modelMapping:
+  claude-3-5-sonnet-*: "default"    # sonnet系 → passthroughワークフロー
+  claude-opus-*: "pro"              # opus系 → agenticワークフロー
+
+workflowTimeout: 300000  # ワークフロー実行タイムアウト（ミリ秒）。デフォルト: 5分
+

@@ -93,6 +93,7 @@ program
         workflows: config.workflows,
         modelMapping: config.modelMapping,
         routingWorkflow: config.routingWorkflow,
+        defaultOptions: config.defaultOptions,
       });
     } catch (error) {
       console.error(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);

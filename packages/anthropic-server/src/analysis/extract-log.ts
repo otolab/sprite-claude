@@ -23,6 +23,12 @@ import {
   displayMessages,
   extractRawValue,
 } from './message-detail.js';
+import {
+  extractTaskOverviews,
+  extractTaskDetail,
+  displayTaskOverviews,
+  displayTaskDetail,
+} from './task-detail.js';
 
 const program = new Command();
 
@@ -62,6 +68,11 @@ Examples:
 
   # Save to files
   extract-log show --seq 0014 --save
+
+  # Task planning and execution overview
+  extract-log tasks
+  extract-log tasks --session 37433
+  extract-log tasks --seq 0002
 
   # Server lifecycle logs
   extract-log server
@@ -216,6 +227,63 @@ Default: entry-level map (what entries exist, their sizes)
       // Default: entry-level map
       inspectRequest(seqEntries, targetSeqId, filePath);
       console.log('');
+    } catch (error) {
+      console.error('Error:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// ---------------------------------------------------------------------------
+// tasks: workflow task planning and execution details
+// ---------------------------------------------------------------------------
+program
+  .command('tasks')
+  .description(`Show workflow task planning and execution details.
+
+Default: overview of all multi-step requests in a session.
+  --seq <id>: detailed view of a specific request's plan and execution.
+
+Supports agentic workflow (planning → task execution → output).
+Future: 2-phase, tool execution loop patterns.`)
+  .option('-s, --session <pid>', 'Session ID (PID). Default: latest session')
+  .option('--seq <seqId>', 'Show detail for a specific request')
+  .action(async (options) => {
+    try {
+      const sessionId = options.session ? parseInt(options.session) : null;
+      const sessionFiles = findSessionFiles(sessionId);
+
+      if (sessionFiles.length === 0) {
+        console.error('No session files found');
+        process.exit(1);
+      }
+
+      const actualSessionId = extractSessionId(sessionFiles[0]) || 'unknown';
+
+      if (options.seq) {
+        // Detail mode: show specific request
+        const targetSeqId = options.seq.padStart(4, '0');
+        const allEntries: ReturnType<typeof parseLogFile> = [];
+        for (const file of sessionFiles) {
+          allEntries.push(...parseLogFile(file));
+        }
+
+        const detail = extractTaskDetail(allEntries, targetSeqId);
+        if (!detail) {
+          console.error(`No task data found for seq ${targetSeqId}`);
+          process.exit(1);
+        }
+        displayTaskDetail(detail);
+      } else {
+        // Overview mode: show all multi-step requests
+        const overviews = extractTaskOverviews(sessionFiles);
+
+        if (overviews.length === 0) {
+          console.log('\nNo multi-step workflow requests found in this session.\n');
+          return;
+        }
+
+        displayTaskOverviews(overviews, actualSessionId);
+      }
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : String(error));
       process.exit(1);

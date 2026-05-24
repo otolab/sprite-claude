@@ -16,6 +16,7 @@ export type {
   EngineMessage,
   EngineTool,
   EngineLogger,
+  RegisteredTaskInfo,
 } from './types.js';
 
 // prompts（experiments 等での直接利用向け）

@@ -64,8 +64,9 @@ function toAnthropicToolId(driverId: string): string {
 }
 
 function toContentBlocks(result: ProcessResult): ContentBlock[] {
+  const blocks: ContentBlock[] = [];
+
   if (result.type === 'tool_calls') {
-    const blocks: ContentBlock[] = [];
     if (result.text) {
       blocks.push({ type: 'text', text: result.text } as TextBlock);
     }
@@ -92,10 +93,11 @@ function toContentBlocks(result: ProcessResult): ContentBlock[] {
       input: result.input,
     } as ToolUseBlock];
   }
-  return [{
+  blocks.push({
     type: 'text',
     text: result.text,
-  } as TextBlock];
+  } as TextBlock);
+  return blocks;
 }
 
 /**
@@ -279,6 +281,7 @@ export async function handleMessages(
   routingWorkflowKey?: string,
   serverLogger?: ServerLogger,
   configDir?: string,
+  workflowTimeout?: number,
 ): Promise<MessagesResponse> {
   // Create request logger
   const logger = createRequestLogger(pid || process.pid, logLevel || 'full');
@@ -330,7 +333,7 @@ export async function handleMessages(
     };
 
     const result = await runWorkflow(wfDef, aiService, module, {}, [], engineLogger,
-      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig, workflowTimeout });
 
     content = [{
       type: 'text',
@@ -367,7 +370,7 @@ export async function handleMessages(
 
     const result = await runWorkflow(wfDef, aiService, module, context,
       request.tools || [], engineLogger,
-      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig });
+      { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig, workflowTimeout });
     content = toContentBlocks(result);
   }
 

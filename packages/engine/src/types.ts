@@ -23,8 +23,8 @@ export interface ToolCallResult {
 
 export type ProcessResult =
   | { type: 'tool_call'; toolName: string; input: Record<string, unknown> }
-  | { type: 'tool_calls'; calls: ToolCallResult[]; text?: string }
-  | { type: 'response'; text: string };
+  | { type: 'tool_calls'; calls: ToolCallResult[]; text?: string; thinking?: string }
+  | { type: 'response'; text: string; thinking?: string };
 
 export type WorkflowMode = 'rag' | 'decision' | 'chat' | 'passthrough' | 'agentic';
 
@@ -39,6 +39,8 @@ export interface WorkflowOptions {
   workflowName?: string;
   /** ログ出力用のデフォルトモデル名（runner.tsが設定） */
   modelName?: string;
+  /** ワークフロー全体のタイムアウト（ミリ秒） */
+  workflowTimeout?: number;
 }
 
 import type { QueryResult } from '@modular-prompt/driver';
@@ -47,11 +49,20 @@ import type { WorkflowResult as ProcessWorkflowResult } from '@modular-prompt/pr
 /** logLlmResponse に渡せるデータ型 */
 export type LlmResponseData = QueryResult | Omit<ProcessWorkflowResult<unknown>, 'context'>;
 
+export interface RegisteredTaskInfo {
+  name: string;
+  taskType: string;
+  instruction: string;
+  reason?: string;
+  driverRole?: string;
+}
+
 export interface EngineLogger {
   logPrompt(phase: string, compiled: unknown, metadata?: { toolCount?: number }): void;
   logLlmResponse(phase: string, data: LlmResponseData, model?: string): void;
   logError(phase: string, message: string, data?: unknown): void;
   logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
+  logTaskRegistration?(phase: string, tasks: RegisteredTaskInfo[]): void;
 }
 
 export interface WorkflowDefinition {

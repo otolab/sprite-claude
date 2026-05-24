@@ -33,6 +33,13 @@ export const PHASES = {
 export type Phase = typeof PHASES[keyof typeof PHASES];
 
 /**
+ * Known task types from @modular-prompt/process planning phase.
+ * In 0.5.0+, the planner calls these directly as tool names instead of __register_task.
+ */
+export const TASK_TYPES = ['think', 'act', 'verify', 'extractContext', 'recall', 'determine', 'output'] as const;
+export type TaskType = typeof TASK_TYPES[number];
+
+/**
  * Phase descriptions for help messages
  */
 export const PHASE_DESCRIPTIONS: Record<Phase, string> = {
@@ -62,7 +69,7 @@ export interface LogEntry {
   pid: number;
   seqId: string;
   phase: string;
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info' | 'task_registration';
   data: any;
 }
 

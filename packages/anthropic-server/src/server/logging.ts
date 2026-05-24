@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, appendFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import type { MessagesRequest, MessagesResponse } from '../schema.js';
-import type { EngineLogger, LlmResponseData } from '@sprite-claude/engine';
+import type { EngineLogger, LlmResponseData, RegisteredTaskInfo } from '@sprite-claude/engine';
 import { formatCompletionPrompt } from '@modular-prompt/driver';
 
 /**
@@ -13,7 +13,7 @@ export interface LogEntry {
   pid: number;
   seqId: string;
   phase: string;
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info';
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info' | 'task_registration';
   // Note: data can be MessagesRequest, MessagesResponse, prompt string, LLM response, etc.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
@@ -212,6 +212,25 @@ export class RequestLogger {
   }
 
   /**
+   * Log task registration from planning phase
+   */
+  logTaskRegistration(
+    phase: string,
+    tasks: RegisteredTaskInfo[],
+  ): void {
+    if (this.level === 'none') return;
+
+    this.appendLog({
+      timestamp: new Date().toISOString(),
+      pid: this.pid,
+      seqId: this.seqId,
+      phase,
+      type: 'task_registration',
+      data: { taskCount: tasks.length, tasks },
+    });
+  }
+
+  /**
    * Log driver/model selection info
    */
   logDriverInfo(
@@ -273,6 +292,9 @@ export function toEngineLogger(requestLogger: RequestLogger, serverLogger?: Serv
     logDriverInfo(phase, model, capabilities) {
       serverLogger?.info('driver', `Model capabilities: ${model}`, capabilities);
       requestLogger.logDriverInfo(phase, model, capabilities);
+    },
+    logTaskRegistration(phase, tasks) {
+      requestLogger.logTaskRegistration(phase, tasks);
     },
   };
 }
