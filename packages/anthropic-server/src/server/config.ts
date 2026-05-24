@@ -86,6 +86,15 @@ export function loadConfig(configPath: string): ServerConfig {
     const config = yaml.load(content) as ServerConfig;
     if (!config) return {};
 
+    // Expand tilde in model driverOptions paths
+    if (config.models) {
+      for (const model of config.models) {
+        if (model.driverOptions?.cacheDir) {
+          model.driverOptions.cacheDir = expandPath(model.driverOptions.cacheDir);
+        }
+      }
+    }
+
     return config;
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {

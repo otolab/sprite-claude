@@ -74,7 +74,9 @@ export async function resolveDriver(
     }
 
     cache.set(key, driver);
-    console.log(`[engine] Driver resolved: ${key} (capabilities: [${capabilities.join(', ')}])`);
+    const extras: string[] = [`capabilities: [${capabilities.join(', ')}]`];
+    if (spec.driverOptions?.cacheDir) extras.push(`kvCache: ${spec.driverOptions.cacheDir}`);
+    console.log(`[engine] Driver resolved: ${key} (${extras.join(', ')})`);
     return { driver, model: spec.model, provider: spec.provider, isNew: true };
   } finally {
     inflight.delete(key);

@@ -34,6 +34,8 @@ models:
     capabilities: ["local", "fast"]
     priority: 10
     # disabled: true  # モデルを無効にするにはこの行を有効化
+    driverOptions:
+      cacheDir: "~/.sprite-claude/cache/kv"  # KVキャッシュを有効化
 
   # Vertex AI Gemini
   - model: "gemini-2.0-flash-001"
