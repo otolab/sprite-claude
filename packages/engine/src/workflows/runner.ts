@@ -3,7 +3,7 @@ import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
 import type { DriverSet } from '@modular-prompt/process';
 import type { WorkflowDefinition, WorkflowOptions, EngineTool, EngineLogger, ProcessResult } from '../types.js';
-import { resolveDriver } from '../driver-cache.js';
+import { resolveDriver, getCacheStats } from '../driver-cache.js';
 import { agenticWorkflow } from './agentic.js';
 import { passthroughWorkflow } from './passthrough.js';
 
@@ -112,15 +112,22 @@ export async function runWorkflow<T>(
     const workflowPromise = passthroughWorkflow(resolved.driver, compiled, tools, logger,
       { ...options, modelName: resolved.model });
 
-    if (!timeoutMs) return workflowPromise;
-    try {
-      return await withTimeout(workflowPromise, timeoutMs, `passthrough(${resolved.model})`);
-    } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
-        logger.logError('passthrough', error.message, { model: resolved.model, timeoutMs });
+    let result: ProcessResult;
+    if (!timeoutMs) {
+      result = await workflowPromise;
+    } else {
+      try {
+        result = await withTimeout(workflowPromise, timeoutMs, `passthrough(${resolved.model})`);
+      } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
+          logger.logError('passthrough', error.message, { model: resolved.model, timeoutMs });
+        }
+        throw error;
       }
-      throw error;
     }
+    const stats = getCacheStats(resolved.driver);
+    if (stats) logger.logCacheStats?.('passthrough', stats);
+    return result;
   }
 
   if (def.mode === 'agentic') {
@@ -131,15 +138,22 @@ export async function runWorkflow<T>(
     const workflowPromise = agenticWorkflow(driverSet, module, context, tools, logger,
       { ...options, modelName: defaultModel });
 
-    if (!timeoutMs) return workflowPromise;
-    try {
-      return await withTimeout(workflowPromise, timeoutMs, `agentic(${defaultModel})`);
-    } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
-        logger.logError('agentic', error.message, { defaultModel, models: modelNames, timeoutMs });
+    let result: ProcessResult;
+    if (!timeoutMs) {
+      result = await workflowPromise;
+    } else {
+      try {
+        result = await withTimeout(workflowPromise, timeoutMs, `agentic(${defaultModel})`);
+      } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
+          logger.logError('agentic', error.message, { defaultModel, models: modelNames, timeoutMs });
+        }
+        throw error;
       }
-      throw error;
     }
+    const stats = getCacheStats(driverSet.default);
+    if (stats) logger.logCacheStats?.('agentic', stats);
+    return result;
   }
 
   throw new Error(`Unsupported workflow mode: ${def.mode}`);

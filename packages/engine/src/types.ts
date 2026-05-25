@@ -57,12 +57,22 @@ export interface RegisteredTaskInfo {
   driverRole?: string;
 }
 
+export interface CacheStats {
+  totalQueries: number;
+  incremental: number;
+  fresh: number;
+  totalPromptTokens: number;
+  prefillReusedTokens: number;
+  cacheGrowthTokens: number;
+}
+
 export interface EngineLogger {
   logPrompt(phase: string, compiled: unknown, metadata?: { toolCount?: number }): void;
   logLlmResponse(phase: string, data: LlmResponseData, model?: string): void;
   logError(phase: string, message: string, data?: unknown): void;
   logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
   logTaskRegistration?(phase: string, tasks: RegisteredTaskInfo[]): void;
+  logCacheStats?(phase: string, stats: CacheStats): void;
 }
 
 export interface WorkflowDefinition {

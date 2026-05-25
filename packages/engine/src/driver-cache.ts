@@ -1,4 +1,5 @@
 import type { AIDriver, AIService, DriverCapability, ModelSpec, SelectionOptions } from '@modular-prompt/driver';
+import type { CacheStats } from './types.js';
 
 /**
  * Resolved driver with model metadata
@@ -81,6 +82,17 @@ export async function resolveDriver(
   } finally {
     inflight.delete(key);
   }
+}
+
+/**
+ * Extract cache stats from a driver's cacheController (if present).
+ * Works with MlxDriver which has a private cacheController with getStats().
+ */
+export function getCacheStats(driver: AIDriver): CacheStats | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctrl = (driver as any).cacheController;
+  if (!ctrl || typeof ctrl.getStats !== 'function') return undefined;
+  return ctrl.getStats();
 }
 
 /**

@@ -4,7 +4,7 @@ export { passthroughWorkflow } from './workflows/passthrough.js';
 export { agenticWorkflow } from './workflows/agentic.js';
 export { runWorkflow } from './workflows/runner.js';
 export type { AgenticTask } from '@modular-prompt/process';
-export { resolveDriver, clearDriverCache, type ResolvedDriver } from './driver-cache.js';
+export { resolveDriver, clearDriverCache, getCacheStats, type ResolvedDriver } from './driver-cache.js';
 
 // 型
 export type {
@@ -16,6 +16,7 @@ export type {
   EngineMessage,
   EngineTool,
   EngineLogger,
+  CacheStats,
   RegisteredTaskInfo,
 } from './types.js';
 
