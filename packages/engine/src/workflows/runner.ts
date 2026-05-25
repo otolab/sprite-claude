@@ -126,7 +126,7 @@ export async function runWorkflow<T>(
       }
     }
     const stats = getCacheStats(resolved.driver);
-    if (stats) logger.logCacheStats?.('passthrough', stats);
+    if (stats) logger.logCacheStats?.(options.workflowName || 'passthrough', stats);
     return result;
   }
 
@@ -152,7 +152,7 @@ export async function runWorkflow<T>(
       }
     }
     const stats = getCacheStats(driverSet.default);
-    if (stats) logger.logCacheStats?.('agentic', stats);
+    if (stats) logger.logCacheStats?.(options.workflowName || 'agentic', stats);
     return result;
   }
 

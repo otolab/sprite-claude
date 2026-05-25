@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { homedir } from 'os';
 import { resolve } from 'path';
 import yaml from 'js-yaml';
 import type { ModelSpec, SelectionOptions } from '@modular-prompt/driver';
@@ -69,7 +70,7 @@ export interface ServerConfig {
  */
 function expandPath(path: string): string {
   if (path.startsWith('~/')) {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const homeDir = process.env.HOME || process.env.USERPROFILE || homedir();
     return resolve(homeDir, path.slice(2));
   }
   return resolve(path);
