@@ -17,10 +17,5 @@
   },
   "devDependencies": {
     "typescript": "^5.3.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@modular-prompt/driver"
-    ]
   }
 }

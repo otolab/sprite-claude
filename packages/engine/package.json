@@ -11,6 +11,9 @@
     "clean": "tsc --build --clean",
     "typecheck": "tsc --noEmit"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@modular-prompt/core": "0.3.0",
     "@modular-prompt/driver": "0.13.1",

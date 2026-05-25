@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@ungap/structured-clone': '>=1.3.1'
+
 importers:
 
   .:
@@ -28,8 +31,8 @@ importers:
         specifier: 0.13.1
         version: 0.13.1(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils':
-        specifier: latest
-        version: 0.3.4
+        specifier: 0.3.5
+        version: 0.3.5
       '@sprite-claude/engine':
         specifier: workspace:*
         version: link:../engine
@@ -478,10 +481,6 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@modular-prompt/core@0.2.2':
-    resolution: {integrity: sha512-sn9O+mmd5bQy8XiRVD10f0KbzuGYdU/Dd6Loe0kQAc4JckLwVddsjVsGod8Dfvm6x+OX1Ww2dVLKmVXXWXo5Fw==}
-    engines: {node: '>=18.0.0'}
-
   '@modular-prompt/core@0.3.0':
     resolution: {integrity: sha512-jSY0kPMNo7lVPRAH6OzX1tQGhKWLLcHjKUmQUqNVrlKN8DZ+C1hZxl5yQ8jxaY850XQPo8ZFy27NUHQvUAZ0vA==}
     engines: {node: '>=18.0.0'}
@@ -498,10 +497,6 @@ packages:
   '@modular-prompt/process@0.5.2':
     resolution: {integrity: sha512-XHLBE2F9MWu3K90e64Rb6y0vkow2p6x2TkEteA0QPRuMhRuePgIezZW30jz6PLw2f0K6HTvQFVzyv2EGUMIX7A==}
     engines: {node: '>=18.0.0'}
-
-  '@modular-prompt/utils@0.3.4':
-    resolution: {integrity: sha512-7m0vdHHITNCc4z2/8xyYCe6gutECj8uLICPSE6JI20imu3sgeWtxu6NLHajueQ4RmaZRgZtEX6mnGipdnuYfgA==}
-    engines: {node: '>=16.0.0'}
 
   '@modular-prompt/utils@0.3.5':
     resolution: {integrity: sha512-5IGJXTiutJIAAys7LJQwaT3w8cYG/LDIeBbX3kJqs9ilc/7Dc7yA0c7LSdBM1F6cQK8ayXFx9WZKPoM9w8gc5w==}
@@ -747,9 +742,8 @@ packages:
     resolution: {integrity: sha512-BmxxndzEWhE4TIEEMBs8lP3MBWN3jFPs/p6gPm/wkv02o41hI6cq9AuSmGAaTTHPtA1FTi2jBre4A9rm5ZmX+Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@ungap/structured-clone@1.3.0':
-    resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
-    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
+  '@ungap/structured-clone@1.3.1':
+    resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
 
   '@vitest/expect@1.6.1':
     resolution: {integrity: sha512-jXL+9+ZNIJKruofqXuuTClf44eSpcHlgj3CiuNihUF3Ioujtmc0zIa3UJOW5RjDK1YLBJZnWBlPuqhYycLioog==}
@@ -2003,8 +1997,6 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@modular-prompt/core@0.2.2': {}
-
   '@modular-prompt/core@0.3.0': {}
 
   '@modular-prompt/driver@0.13.1(ws@8.20.0)(zod@3.25.76)':
@@ -2059,13 +2051,6 @@ snapshots:
       - utf-8-validate
       - ws
       - zod
-
-  '@modular-prompt/utils@0.3.4':
-    dependencies:
-      '@modular-prompt/core': 0.2.2
-      js-yaml: 4.1.1
-      jsonrepair: 3.13.1
-      merge-stream: 2.0.0
 
   '@modular-prompt/utils@0.3.5':
     dependencies:
@@ -2280,7 +2265,7 @@ snapshots:
       '@typescript-eslint/types': 8.48.1
       eslint-visitor-keys: 4.2.1
 
-  '@ungap/structured-clone@1.3.0': {}
+  '@ungap/structured-clone@1.3.1': {}
 
   '@vitest/expect@1.6.1':
     dependencies:
@@ -2523,7 +2508,7 @@ snapshots:
       '@humanwhocodes/config-array': 0.13.0
       '@humanwhocodes/module-importer': 1.0.1
       '@nodelib/fs.walk': 1.2.8
-      '@ungap/structured-clone': 1.3.0
+      '@ungap/structured-clone': 1.3.1
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6

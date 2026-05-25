@@ -22,10 +22,13 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build:force"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@modular-prompt/core": "0.3.0",
     "@modular-prompt/driver": "0.13.1",
-    "@modular-prompt/utils": "latest",
+    "@modular-prompt/utils": "0.3.5",
     "@sprite-claude/engine": "workspace:*",
     "commander": "^12.1.0",
     "fastify": "^4.25.0",
