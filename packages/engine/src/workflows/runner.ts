@@ -103,10 +103,11 @@ export async function runWorkflow<T>(
   const timeoutMs = options.workflowTimeout;
 
   if (def.mode === 'passthrough') {
+    const phase = options.workflowName || 'passthrough';
     const resolved = await resolveDriver(aiService, [], { preferLocal: true, preferFast: true }, overrides.default);
     if (!resolved) throw new Error('No suitable model found for passthrough.');
     if (logger.logDriverInfo) {
-      logger.logDriverInfo(options.workflowName || 'passthrough', resolved.model, {});
+      logger.logDriverInfo(phase, resolved.model, {});
     }
     const compiled = compile(module, context);
     const workflowPromise = passthroughWorkflow(resolved.driver, compiled, tools, logger,
@@ -120,20 +121,21 @@ export async function runWorkflow<T>(
         result = await withTimeout(workflowPromise, timeoutMs, `passthrough(${resolved.model})`);
       } catch (error) {
         if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
-          logger.logError('passthrough', error.message, { model: resolved.model, timeoutMs });
+          logger.logError(phase, error.message, { model: resolved.model, timeoutMs });
         }
         throw error;
       }
     }
     const stats = getCacheStats(resolved.driver);
-    if (stats) logger.logCacheStats?.(options.workflowName || 'passthrough', stats);
+    if (stats) logger.logCacheStats?.(phase, stats);
     return result;
   }
 
   if (def.mode === 'agentic') {
+    const phase = options.workflowName || 'agentic';
     const { driverSet, defaultModel, modelNames } = await buildDriverSet(aiService, overrides);
     if (logger.logDriverInfo) {
-      logger.logDriverInfo(options.workflowName || 'agentic', defaultModel, { models: modelNames });
+      logger.logDriverInfo(phase, defaultModel, { models: modelNames });
     }
     const workflowPromise = agenticWorkflow(driverSet, module, context, tools, logger,
       { ...options, modelName: defaultModel });
@@ -146,13 +148,13 @@ export async function runWorkflow<T>(
         result = await withTimeout(workflowPromise, timeoutMs, `agentic(${defaultModel})`);
       } catch (error) {
         if (error instanceof Error && error.message.startsWith('Workflow timeout:')) {
-          logger.logError('agentic', error.message, { defaultModel, models: modelNames, timeoutMs });
+          logger.logError(phase, error.message, { defaultModel, models: modelNames, timeoutMs });
         }
         throw error;
       }
     }
     const stats = getCacheStats(driverSet.default);
-    if (stats) logger.logCacheStats?.(options.workflowName || 'agentic', stats);
+    if (stats) logger.logCacheStats?.(phase, stats);
     return result;
   }
 
