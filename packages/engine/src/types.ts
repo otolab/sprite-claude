@@ -72,7 +72,7 @@ export interface EngineLogger {
   logError(phase: string, message: string, data?: unknown): void;
   logDriverInfo?(phase: string, model: string, capabilities: unknown): void;
   logTaskRegistration?(phase: string, tasks: RegisteredTaskInfo[]): void;
-  logCacheStats?(phase: string, stats: CacheStats): void;
+  logCacheStats?(phase: string, stats: CacheStats | Record<string, CacheStats>): void;
 }
 
 export interface WorkflowDefinition {

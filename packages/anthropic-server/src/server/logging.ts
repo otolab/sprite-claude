@@ -235,7 +235,7 @@ export class RequestLogger {
    */
   logCacheStats(
     phase: string,
-    stats: CacheStats,
+    stats: CacheStats | Record<string, CacheStats>,
   ): void {
     if (this.level === 'none') return;
 

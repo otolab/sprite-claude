@@ -76,6 +76,38 @@ function expandPath(path: string): string {
   return resolve(path);
 }
 
+function validateConfig(config: Record<string, unknown>): void {
+  const errors: string[] = [];
+
+  if ('models' in config && config.models != null) {
+    if (!Array.isArray(config.models)) {
+      errors.push('models must be an array');
+    } else {
+      for (let i = 0; i < config.models.length; i++) {
+        const m = config.models[i];
+        if (!m || typeof m !== 'object') {
+          errors.push(`models[${i}]: must be an object`);
+          continue;
+        }
+        if (typeof m.model !== 'string') errors.push(`models[${i}].model: must be a string`);
+        if (typeof m.provider !== 'string') errors.push(`models[${i}].provider: must be a string`);
+        if (m.driverOptions?.cacheDir != null && typeof m.driverOptions.cacheDir !== 'string') {
+          errors.push(`models[${i}].driverOptions.cacheDir: must be a string`);
+        }
+      }
+    }
+  }
+
+  if ('server' in config && config.server != null) {
+    const s = config.server as Record<string, unknown>;
+    if (s.port != null && typeof s.port !== 'number') errors.push('server.port: must be a number');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid config:\n  ${errors.join('\n  ')}`);
+  }
+}
+
 /**
  * Load configuration from YAML file
  */
@@ -86,6 +118,8 @@ export function loadConfig(configPath: string): ServerConfig {
     const content = readFileSync(expandedPath, 'utf8');
     const config = yaml.load(content) as ServerConfig;
     if (!config) return {};
+
+    validateConfig(config as unknown as Record<string, unknown>);
 
     // Expand tilde in model driverOptions paths
     if (config.models) {

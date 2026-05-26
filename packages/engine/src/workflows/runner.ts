@@ -3,7 +3,7 @@ import type { PromptModule } from '@modular-prompt/core';
 import { compile } from '@modular-prompt/core';
 import type { DriverSet } from '@modular-prompt/process';
 import type { WorkflowDefinition, WorkflowOptions, EngineTool, EngineLogger, ProcessResult } from '../types.js';
-import { resolveDriver, getCacheStats } from '../driver-cache.js';
+import { resolveDriver, getCacheStats, getAllCacheStats } from '../driver-cache.js';
 import { agenticWorkflow } from './agentic.js';
 import { passthroughWorkflow } from './passthrough.js';
 
@@ -153,8 +153,8 @@ export async function runWorkflow<T>(
         throw error;
       }
     }
-    const stats = getCacheStats(driverSet.default);
-    if (stats) logger.logCacheStats?.(phase, stats);
+    const allStats = getAllCacheStats(driverSet);
+    if (Object.keys(allStats).length > 0) logger.logCacheStats?.(phase, allStats);
     return result;
   }
 

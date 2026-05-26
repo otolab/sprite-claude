@@ -101,6 +101,22 @@ export function getCacheStats(driver: AIDriver): CacheStats | undefined {
 }
 
 /**
+ * Extract cache stats from all unique drivers in a DriverSet.
+ * Deduplicates drivers that are shared across roles (via fallback logic).
+ */
+export function getAllCacheStats(driverSet: Record<string, AIDriver>): Record<string, CacheStats> {
+  const seen = new Set<AIDriver>();
+  const result: Record<string, CacheStats> = {};
+  for (const [role, driver] of Object.entries(driverSet)) {
+    if (seen.has(driver)) continue;
+    seen.add(driver);
+    const stats = getCacheStats(driver);
+    if (stats) result[role] = stats;
+  }
+  return result;
+}
+
+/**
  * Clear the driver cache (for testing)
  */
 export function clearDriverCache(): void {
