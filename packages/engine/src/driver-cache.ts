@@ -92,7 +92,12 @@ export function getCacheStats(driver: AIDriver): CacheStats | undefined {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ctrl = (driver as any).cacheController;
   if (!ctrl || typeof ctrl.getStats !== 'function') return undefined;
-  return ctrl.getStats();
+
+  try {
+    return ctrl.getStats();
+  } catch {
+    return undefined;
+  }
 }
 
 /**
