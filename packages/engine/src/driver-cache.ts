@@ -1,4 +1,5 @@
 import type { AIDriver, AIService, DriverCapability, ModelSpec, SelectionOptions } from '@modular-prompt/driver';
+import type { CacheStats } from './types.js';
 
 /**
  * Resolved driver with model metadata
@@ -74,11 +75,45 @@ export async function resolveDriver(
     }
 
     cache.set(key, driver);
-    console.log(`[engine] Driver resolved: ${key} (capabilities: [${capabilities.join(', ')}])`);
+    const extras: string[] = [`capabilities: [${capabilities.join(', ')}]`];
+    if (spec.driverOptions?.cacheDir) extras.push(`kvCache: ${spec.driverOptions.cacheDir}`);
+    console.log(`[engine] Driver resolved: ${key} (${extras.join(', ')})`);
     return { driver, model: spec.model, provider: spec.provider, isNew: true };
   } finally {
     inflight.delete(key);
   }
+}
+
+/**
+ * Extract cache stats from a driver's cacheController (if present).
+ * Works with MlxDriver which has a private cacheController with getStats().
+ */
+export function getCacheStats(driver: AIDriver): CacheStats | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctrl = (driver as any).cacheController;
+  if (!ctrl || typeof ctrl.getStats !== 'function') return undefined;
+
+  try {
+    return ctrl.getStats();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Extract cache stats from all unique drivers in a DriverSet.
+ * Deduplicates drivers that are shared across roles (via fallback logic).
+ */
+export function getAllCacheStats(driverSet: Record<string, AIDriver>): Record<string, CacheStats> {
+  const seen = new Set<AIDriver>();
+  const result: Record<string, CacheStats> = {};
+  for (const [role, driver] of Object.entries(driverSet)) {
+    if (seen.has(driver)) continue;
+    seen.add(driver);
+    const stats = getCacheStats(driver);
+    if (stats) result[role] = stats;
+  }
+  return result;
 }
 
 /**

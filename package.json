@@ -15,12 +15,10 @@
     "@anthropic-ai/sdk": "^0.70.0",
     "yaml": "^2.8.1"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "typescript": "^5.3.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@modular-prompt/driver"
-    ]
   }
 }

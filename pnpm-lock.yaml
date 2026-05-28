@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@ungap/structured-clone': ^1.3.1
+
 importers:
 
   .:
@@ -22,14 +25,14 @@ importers:
   packages/anthropic-server:
     dependencies:
       '@modular-prompt/core':
-        specifier: 0.2.2
-        version: 0.2.2
+        specifier: 0.3.0
+        version: 0.3.0
       '@modular-prompt/driver':
-        specifier: 0.12.0
-        version: 0.12.0(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.13.1
+        version: 0.13.1(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/utils':
-        specifier: latest
-        version: 0.3.3
+        specifier: 0.3.5
+        version: 0.3.5
       '@sprite-claude/engine':
         specifier: workspace:*
         version: link:../engine
@@ -53,8 +56,8 @@ importers:
         version: 3.25.0(zod@3.25.76)
     devDependencies:
       '@modular-prompt/experiment':
-        specifier: ^0.4.32
-        version: 0.4.32(ws@8.20.0)
+        specifier: ^0.4.34
+        version: 0.4.34(ws@8.20.0)
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -83,14 +86,14 @@ importers:
   packages/engine:
     dependencies:
       '@modular-prompt/core':
-        specifier: 0.2.2
-        version: 0.2.2
+        specifier: 0.3.0
+        version: 0.3.0
       '@modular-prompt/driver':
-        specifier: 0.12.0
-        version: 0.12.0(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.13.1
+        version: 0.13.1(ws@8.20.0)(zod@3.25.76)
       '@modular-prompt/process':
-        specifier: 0.5.0
-        version: 0.5.0(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.5.2
+        version: 0.5.2(ws@8.20.0)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -449,11 +452,11 @@ packages:
     resolution: {integrity: sha512-HqYqoivNtkq59po8m7KI0n+lWKdz4kabENncYQXZCX/hBWJfXtKAfR/2nUQsP+TwSfHKoA7zDL2RrJYIv/j3VQ==}
     engines: {node: '>=18.0.0'}
 
-  '@google/genai@1.34.0':
-    resolution: {integrity: sha512-vu53UMPvjmb7PGzlYu6Tzxso8Dfhn+a7eQFaS2uNemVtDZKwzSpJ5+ikqBbXplF7RGB1STcVDqCkPvquiwb2sw==}
+  '@google/genai@2.0.1':
+    resolution: {integrity: sha512-trxxbVePM9J8Cuni5x7+xvApoqb2y6Zk27/wugjT2cuwHOT78nFGdf/Ni29MkDxzWwrj90OQpno1Ana6dm3D2A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@modelcontextprotocol/sdk': ^1.24.0
+      '@modelcontextprotocol/sdk': ^1.25.2
     peerDependenciesMeta:
       '@modelcontextprotocol/sdk':
         optional: true
@@ -478,28 +481,25 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@modular-prompt/core@0.2.2':
-    resolution: {integrity: sha512-sn9O+mmd5bQy8XiRVD10f0KbzuGYdU/Dd6Loe0kQAc4JckLwVddsjVsGod8Dfvm6x+OX1Ww2dVLKmVXXWXo5Fw==}
+  '@modular-prompt/core@0.3.0':
+    resolution: {integrity: sha512-jSY0kPMNo7lVPRAH6OzX1tQGhKWLLcHjKUmQUqNVrlKN8DZ+C1hZxl5yQ8jxaY850XQPo8ZFy27NUHQvUAZ0vA==}
     engines: {node: '>=18.0.0'}
 
-  '@modular-prompt/driver@0.12.0':
-    resolution: {integrity: sha512-VjctdTZAlKAfMj/tO6lQf9kZon1B7sxwsBor1eVaNe/4LelhMHoAVKjrzfE78l/dnfgy8DFEImNDgxNu7K9Urw==}
+  '@modular-prompt/driver@0.13.1':
+    resolution: {integrity: sha512-Qe/kJcYXP7bza7v1L9k/EBuvUC+6KG+Y7XzArP2b1mbF0d/QXJL7jVJvA8vU79hfPNwOEbY6G6EXJVxkVCGW4Q==}
+    engines: {node: '>=20.0.0'}
 
-  '@modular-prompt/experiment@0.4.32':
-    resolution: {integrity: sha512-AK13dqxxr2DZ6OulXh8HFDQtd6QTBDHl0A4VGrm7ffF61OHhH0Sn0v7Jp8g6OCr/btxEFd0lJcccRhi7mOuG6w==}
+  '@modular-prompt/experiment@0.4.34':
+    resolution: {integrity: sha512-MjGYQiF+ZnbYO09T4ECG3DSKU1FmK1TuQBo/Gt6yzPfEWl9uSj/qM16HqcbYOAeY4C+VNmlijA+DchccV4IxeQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@modular-prompt/process@0.5.0':
-    resolution: {integrity: sha512-r+5GidJ3uTvTxbgnNGjrMj0dK8mN3Kq/AJ/0dlepJxhPcHyC6v/w7GD/2MMZhkQUIm+RTcF5DxHR0qOJGWlp3Q==}
+  '@modular-prompt/process@0.5.2':
+    resolution: {integrity: sha512-XHLBE2F9MWu3K90e64Rb6y0vkow2p6x2TkEteA0QPRuMhRuePgIezZW30jz6PLw2f0K6HTvQFVzyv2EGUMIX7A==}
     engines: {node: '>=18.0.0'}
 
-  '@modular-prompt/utils@0.3.3':
-    resolution: {integrity: sha512-jddL74gGqVh9gESjbgre4UW2Z9gYXedRZsfXIfKYIwJZb8L89Wo59NOobxM0LWJniRuevW5DwiXdViWJqxa/ug==}
-    engines: {node: '>=16.0.0'}
-
-  '@modular-prompt/utils@0.3.4':
-    resolution: {integrity: sha512-7m0vdHHITNCc4z2/8xyYCe6gutECj8uLICPSE6JI20imu3sgeWtxu6NLHajueQ4RmaZRgZtEX6mnGipdnuYfgA==}
+  '@modular-prompt/utils@0.3.5':
+    resolution: {integrity: sha512-5IGJXTiutJIAAys7LJQwaT3w8cYG/LDIeBbX3kJqs9ilc/7Dc7yA0c7LSdBM1F6cQK8ayXFx9WZKPoM9w8gc5w==}
     engines: {node: '>=16.0.0'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -516,6 +516,36 @@ packages:
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
+
+  '@protobufjs/aspromise@1.1.2':
+    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
+
+  '@protobufjs/base64@1.1.2':
+    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
+
+  '@protobufjs/codegen@2.0.5':
+    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
+
+  '@protobufjs/eventemitter@1.1.1':
+    resolution: {integrity: sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==}
+
+  '@protobufjs/fetch@1.1.1':
+    resolution: {integrity: sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==}
+
+  '@protobufjs/float@1.0.2':
+    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
+
+  '@protobufjs/inquire@1.1.2':
+    resolution: {integrity: sha512-pa0vFRuws4wkvaXKK1uXZMAwAX4/t8ANaJo45iw/oQHNQ9q5xUzwgFmVJGXiga2BeN+zpX7Vf9vmsiIa2J+MUw==}
+
+  '@protobufjs/path@1.1.2':
+    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
+
+  '@protobufjs/pool@1.1.0':
+    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
+
+  '@protobufjs/utf8@1.1.1':
+    resolution: {integrity: sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg==}
 
   '@rollup/rollup-android-arm-eabi@4.53.3':
     resolution: {integrity: sha512-mRSi+4cBjrRLoaal2PnqH82Wqyb+d3HsPUN/W+WslCXsZsyHa9ZeQQX/pQsZaVIWDkPcpV6jJ+3KLbTbgnwv8w==}
@@ -650,6 +680,9 @@ packages:
   '@types/node@20.19.25':
     resolution: {integrity: sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==}
 
+  '@types/retry@0.12.0':
+    resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
+
   '@typescript-eslint/eslint-plugin@8.48.1':
     resolution: {integrity: sha512-X63hI1bxl5ohelzr0LY5coufyl0LJNthld+abwxpCoo6Gq+hSqhKwci7MUWkXo67mzgUK6YFByhmaHmUcuBJmA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -709,8 +742,8 @@ packages:
     resolution: {integrity: sha512-BmxxndzEWhE4TIEEMBs8lP3MBWN3jFPs/p6gPm/wkv02o41hI6cq9AuSmGAaTTHPtA1FTi2jBre4A9rm5ZmX+Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@ungap/structured-clone@1.3.0':
-    resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+  '@ungap/structured-clone@1.3.1':
+    resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
 
   '@vitest/expect@1.6.1':
     resolution: {integrity: sha512-jXL+9+ZNIJKruofqXuuTClf44eSpcHlgj3CiuNihUF3Ioujtmc0zIa3UJOW5RjDK1YLBJZnWBlPuqhYycLioog==}
@@ -1218,6 +1251,9 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   loupe@2.3.7:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
 
@@ -1313,6 +1349,10 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
+  p-retry@4.6.2:
+    resolution: {integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==}
+    engines: {node: '>=8'}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -1380,6 +1420,10 @@ packages:
   process-warning@5.0.0:
     resolution: {integrity: sha512-a39t9ApHNx2L4+HBnQKqxxHNs1r7KF+Intd8Q/g1bUh6q0WIp9voPXJ/x0j+ZL45KF1pJd9+q2jLIRMfvEshkA==}
 
+  protobufjs@7.6.1:
+    resolution: {integrity: sha512-4K0myLaWL5EteuSAro91EGFgcfVgxb64Jx+7oDAY6GOkXD4M69yuSEljNcInGVCA5sOPxmZ/EqDLj2x0Q0+Ygg==}
+    engines: {node: '>=12.0.0'}
+
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -1415,6 +1459,10 @@ packages:
   ret@0.4.3:
     resolution: {integrity: sha512-0f4Memo5QP7WQyUEAYUO3esD/XjOc3Zjjg5CPsAq1p8sIu0XPeMbHJemKA0BO7tV0X7+A0FoEpbmHXWxPyD3wQ==}
     engines: {node: '>=10'}
+
+  retry@0.13.1:
+    resolution: {integrity: sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==}
+    engines: {node: '>= 4'}
 
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
@@ -1920,9 +1968,11 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/genai@1.34.0':
+  '@google/genai@2.0.1':
     dependencies:
       google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.6.1
       ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
@@ -1947,16 +1997,16 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@modular-prompt/core@0.2.2': {}
+  '@modular-prompt/core@0.3.0': {}
 
-  '@modular-prompt/driver@0.12.0(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.13.1(ws@8.20.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
       '@google-cloud/vertexai': 1.10.0
-      '@google/genai': 1.34.0
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/utils': 0.3.4
+      '@google/genai': 2.0.1
+      '@modular-prompt/core': 0.3.0
+      '@modular-prompt/utils': 0.3.5
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
@@ -1970,12 +2020,12 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/experiment@0.4.32(ws@8.20.0)':
+  '@modular-prompt/experiment@0.4.34(ws@8.20.0)':
     dependencies:
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/driver': 0.12.0(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/process': 0.5.0(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/utils': 0.3.4
+      '@modular-prompt/core': 0.3.0
+      '@modular-prompt/driver': 0.13.1(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/process': 0.5.2(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/utils': 0.3.5
       commander: 12.1.0
       jiti: 2.6.1
       yaml: 2.8.2
@@ -1988,11 +2038,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@modular-prompt/process@0.5.0(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.5.2(ws@8.20.0)(zod@3.25.76)':
     dependencies:
-      '@modular-prompt/core': 0.2.2
-      '@modular-prompt/driver': 0.12.0(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/utils': 0.3.4
+      '@modular-prompt/core': 0.3.0
+      '@modular-prompt/driver': 0.13.1(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/utils': 0.3.5
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2002,16 +2052,9 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/utils@0.3.3':
+  '@modular-prompt/utils@0.3.5':
     dependencies:
-      '@modular-prompt/core': 0.2.2
-      js-yaml: 4.1.1
-      jsonrepair: 3.13.1
-      merge-stream: 2.0.0
-
-  '@modular-prompt/utils@0.3.4':
-    dependencies:
-      '@modular-prompt/core': 0.2.2
+      '@modular-prompt/core': 0.3.0
       js-yaml: 4.1.1
       jsonrepair: 3.13.1
       merge-stream: 2.0.0
@@ -2029,6 +2072,28 @@ snapshots:
       fastq: 1.19.1
 
   '@pinojs/redact@0.4.0': {}
+
+  '@protobufjs/aspromise@1.1.2': {}
+
+  '@protobufjs/base64@1.1.2': {}
+
+  '@protobufjs/codegen@2.0.5': {}
+
+  '@protobufjs/eventemitter@1.1.1': {}
+
+  '@protobufjs/fetch@1.1.1':
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+
+  '@protobufjs/float@1.0.2': {}
+
+  '@protobufjs/inquire@1.1.2': {}
+
+  '@protobufjs/path@1.1.2': {}
+
+  '@protobufjs/pool@1.1.0': {}
+
+  '@protobufjs/utf8@1.1.1': {}
 
   '@rollup/rollup-android-arm-eabi@4.53.3':
     optional: true
@@ -2105,6 +2170,8 @@ snapshots:
   '@types/node@20.19.25':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/retry@0.12.0': {}
 
   '@typescript-eslint/eslint-plugin@8.48.1(@typescript-eslint/parser@8.48.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)':
     dependencies:
@@ -2198,7 +2265,7 @@ snapshots:
       '@typescript-eslint/types': 8.48.1
       eslint-visitor-keys: 4.2.1
 
-  '@ungap/structured-clone@1.3.0': {}
+  '@ungap/structured-clone@1.3.1': {}
 
   '@vitest/expect@1.6.1':
     dependencies:
@@ -2441,7 +2508,7 @@ snapshots:
       '@humanwhocodes/config-array': 0.13.0
       '@humanwhocodes/module-importer': 1.0.1
       '@nodelib/fs.walk': 1.2.8
-      '@ungap/structured-clone': 1.3.0
+      '@ungap/structured-clone': 1.3.1
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
@@ -2816,6 +2883,8 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
+  long@5.3.2: {}
+
   loupe@2.3.7:
     dependencies:
       get-func-name: 2.0.2
@@ -2901,6 +2970,11 @@ snapshots:
     dependencies:
       p-limit: 3.1.0
 
+  p-retry@4.6.2:
+    dependencies:
+      '@types/retry': 0.12.0
+      retry: 0.13.1
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -2967,6 +3041,21 @@ snapshots:
 
   process-warning@5.0.0: {}
 
+  protobufjs@7.6.1:
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+      '@protobufjs/base64': 1.1.2
+      '@protobufjs/codegen': 2.0.5
+      '@protobufjs/eventemitter': 1.1.1
+      '@protobufjs/fetch': 1.1.1
+      '@protobufjs/float': 1.0.2
+      '@protobufjs/inquire': 1.1.2
+      '@protobufjs/path': 1.1.2
+      '@protobufjs/pool': 1.1.0
+      '@protobufjs/utf8': 1.1.1
+      '@types/node': 20.19.25
+      long: 5.3.2
+
   proxy-addr@2.0.7:
     dependencies:
       forwarded: 0.2.0
@@ -2989,6 +3078,8 @@ snapshots:
   resolve-pkg-maps@1.0.0: {}
 
   ret@0.4.3: {}
+
+  retry@0.13.1: {}
 
   reusify@1.1.0: {}
 

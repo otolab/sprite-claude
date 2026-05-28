@@ -69,7 +69,7 @@ export interface LogEntry {
   pid: number;
   seqId: string;
   phase: string;
-  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info' | 'task_registration';
+  type: 'in' | 'out' | 'prompt' | 'llm_response' | 'error' | 'driver_info' | 'task_registration' | 'cache_stats';
   data: any;
 }
 
