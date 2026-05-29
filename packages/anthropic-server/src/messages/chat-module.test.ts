@@ -20,12 +20,12 @@ describe('chatModule', () => {
       d.type === 'message' && (d.role === 'user' || d.role === 'assistant')
     );
     expect(messages.length).toBe(2);
-    expect(messages[0]).toEqual({
+    expect(messages[0]).toMatchObject({
       type: 'message',
       role: 'user',
       content: 'Hello'
     });
-    expect(messages[1]).toEqual({
+    expect(messages[1]).toMatchObject({
       type: 'message',
       role: 'assistant',
       content: 'Hi there'

@@ -5,6 +5,7 @@ import sys
 import argparse
 from pathlib import Path
 
+from .cache import CacheManager, CacheError
 from .config import Config, ConfigError
 from .server import ServerManager, ServerError
 
@@ -241,6 +242,77 @@ def cmd_server_restart(args):
     return cmd_start(args)
 
 
+def _resolve_cache_manager(args) -> CacheManager:
+    """Config からCacheManager を解決。Config読み込み失敗時はデフォルトパス。"""
+    config_path = args.config or DEFAULT_CONFIG_PATH
+    try:
+        config = Config(config_path)
+        config.load()
+        return CacheManager.from_config(config)
+    except ConfigError:
+        return CacheManager()
+
+
+def cmd_cache_show(args):
+    """Show cache status."""
+    try:
+        manager = _resolve_cache_manager(args)
+        info = manager.show()
+
+        print(f"Cache directory: {info['cache_dir']}")
+        print(f"Entries: {info['entry_count']}")
+        print(f"Total size: {info['total_size_mb']} MB ({info['total_size_gb']} GB)")
+
+        if info['entries']:
+            print()
+            print(f"{'Key':<16} {'Model':<45} {'Size':>8} {'Elements':>8} {'Hint':<8} {'Created'}")
+            print("-" * 120)
+            for e in info['entries']:
+                created = e['created_at'][:10] if len(e['created_at']) >= 10 else e['created_at']
+                print(f"{e['key']:<16} {e['model']:<45} {e['size_mb']:>6.1f}MB {e['elements']:>8} {e['hint']:<8} {created}")
+
+        return 0
+    except CacheError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_cache_clean(args):
+    """Clean cache directory."""
+    try:
+        manager = _resolve_cache_manager(args)
+        result = manager.clean(
+            max_age_days=args.max_age,
+            max_size_gb=args.max_size,
+            dry_run=args.dry_run,
+        )
+
+        if result['dry_run']:
+            print("[dry-run] No files will be deleted.\n")
+
+        if not result['deleted']:
+            print("Nothing to clean.")
+            return 0
+
+        print(f"{'Action':<10} {'Key':<16} {'Model':<40} {'Size':>8} {'Reason'}")
+        print("-" * 100)
+        action = "DELETE" if not result['dry_run'] else "WOULD RM"
+        for d in result['deleted']:
+            print(f"{action:<10} {d['key']:<16} {d['model']:<40} {d['size_mb']:>6.1f}MB {d['reason']}")
+
+        print()
+        if result['dry_run']:
+            print(f"Would delete {len(result['deleted'])} entries")
+        else:
+            print(f"Deleted {len(result['deleted'])} entries, freed {result['freed_mb']} MB")
+        print(f"Kept {result['kept']} entries")
+
+        return 0
+    except CacheError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -277,6 +349,15 @@ Examples:
     config_subparsers = parser_config.add_subparsers(dest='config_command')
     parser_config_edit = config_subparsers.add_parser('edit', help='Edit configuration file')
 
+    # cache command group
+    parser_cache = subparsers.add_parser('cache', help='Cache management')
+    cache_subparsers = parser_cache.add_subparsers(dest='cache_command')
+    cache_subparsers.add_parser('show', help='Show cache status')
+    parser_cache_clean = cache_subparsers.add_parser('clean', help='Clean old cache entries')
+    parser_cache_clean.add_argument('--max-age', type=int, default=7, help='Max age in days (default: 7)')
+    parser_cache_clean.add_argument('--max-size', type=float, default=5.0, help='Max total size in GB (default: 5.0)')
+    parser_cache_clean.add_argument('--dry-run', action='store_true', help='Show what would be deleted')
+
     # server command group
     parser_server = subparsers.add_parser('server', help='Server management')
     server_subparsers = parser_server.add_subparsers(dest='server_command')
@@ -302,7 +383,7 @@ Examples:
         filtered_argv.append(arg)
 
     # Check if first arg is a known command
-    known_commands = ['init', 'config', 'server']
+    known_commands = ['init', 'cache', 'config', 'server']
     if filtered_argv and filtered_argv[0] not in known_commands:
         # All arguments are for claude command
         args = parser.parse_args([])  # Parse with no command
@@ -321,6 +402,16 @@ Examples:
     # Execute command
     if args.command == 'init':
         return cmd_init(args)
+    elif args.command == 'cache':
+        cache_commands = {
+            'show': cmd_cache_show,
+            'clean': cmd_cache_clean,
+        }
+        if args.cache_command in cache_commands:
+            return cache_commands[args.cache_command](args)
+        else:
+            parser_cache.print_help()
+            return 1
     elif args.command == 'config':
         if args.config_command == 'edit':
             return cmd_config_edit(args)
