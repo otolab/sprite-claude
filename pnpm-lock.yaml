@@ -28,8 +28,8 @@ importers:
         specifier: 0.3.0
         version: 0.3.0
       '@modular-prompt/driver':
-        specifier: 0.13.2
-        version: 0.13.2(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.13.3
+        version: 0.13.3(ws@8.21.0)(zod@3.25.76)
       '@modular-prompt/utils':
         specifier: 0.3.5
         version: 0.3.5
@@ -57,7 +57,7 @@ importers:
     devDependencies:
       '@modular-prompt/experiment':
         specifier: ^0.4.34
-        version: 0.4.34(ws@8.20.0)
+        version: 0.4.34(ws@8.21.0)
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -89,11 +89,11 @@ importers:
         specifier: 0.3.0
         version: 0.3.0
       '@modular-prompt/driver':
-        specifier: 0.13.2
-        version: 0.13.2(ws@8.20.0)(zod@3.25.76)
+        specifier: 0.13.3
+        version: 0.13.3(ws@8.21.0)(zod@3.25.76)
       '@modular-prompt/process':
         specifier: 0.5.2
-        version: 0.5.2(ws@8.20.0)(zod@3.25.76)
+        version: 0.5.2(ws@8.21.0)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -489,8 +489,8 @@ packages:
     resolution: {integrity: sha512-Qe/kJcYXP7bza7v1L9k/EBuvUC+6KG+Y7XzArP2b1mbF0d/QXJL7jVJvA8vU79hfPNwOEbY6G6EXJVxkVCGW4Q==}
     engines: {node: '>=20.0.0'}
 
-  '@modular-prompt/driver@0.13.2':
-    resolution: {integrity: sha512-uz19WAT+R3FRL0PIxwn/KGKpAHd9bbjJSQnyBzNFYYJwqHb6B9fJgc67y8QGmbqf5ktoVeKAQOMxV8UbeoglmA==}
+  '@modular-prompt/driver@0.13.3':
+    resolution: {integrity: sha512-GPzipDwnJzVIZW3L3XKhYN5NyAk6xZSsEgkuH4QmA0MhOLR0J32+i3xpc3bpQY4Y37RkjgqlHQ+HXFfkmpWnIg==}
     engines: {node: '>=20.0.0'}
 
   '@modular-prompt/experiment@0.4.34':
@@ -1430,8 +1430,8 @@ packages:
   proper-lockfile@4.1.2:
     resolution: {integrity: sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA==}
 
-  protobufjs@7.6.1:
-    resolution: {integrity: sha512-4K0myLaWL5EteuSAro91EGFgcfVgxb64Jx+7oDAY6GOkXD4M69yuSEljNcInGVCA5sOPxmZ/EqDLj2x0Q0+Ygg==}
+  protobufjs@7.6.2:
+    resolution: {integrity: sha512-N9EiLovGEQOJSPF26Ij7qUGvahfEnq0eeYZ02aigIedkmz1qZSwjnP9SBITHJuF/6MYbIW4HDN8zdYjsjqJKXQ==}
     engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
@@ -1738,8 +1738,8 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.20.0:
-    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -1989,8 +1989,8 @@ snapshots:
     dependencies:
       google-auth-library: 10.6.2
       p-retry: 4.6.2
-      protobufjs: 7.6.1
-      ws: 8.20.0
+      protobufjs: 7.6.2
+      ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -2016,7 +2016,7 @@ snapshots:
 
   '@modular-prompt/core@0.3.0': {}
 
-  '@modular-prompt/driver@0.13.1(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.13.1(ws@8.21.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
@@ -2027,7 +2027,7 @@ snapshots:
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
+      openai: 5.23.2(ws@8.21.0)(zod@3.25.76)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -2037,7 +2037,7 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/driver@0.13.2(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/driver@0.13.3(ws@8.21.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.61.0
       '@anthropic-ai/vertex-sdk': 0.14.4(zod@3.25.76)
@@ -2048,7 +2048,7 @@ snapshots:
       '@types/js-yaml': 4.0.9
       google-auth-library: 9.15.1
       js-yaml: 4.1.1
-      openai: 5.23.2(ws@8.20.0)(zod@3.25.76)
+      openai: 5.23.2(ws@8.21.0)(zod@3.25.76)
       proper-lockfile: 4.1.2
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
@@ -2059,11 +2059,11 @@ snapshots:
       - ws
       - zod
 
-  '@modular-prompt/experiment@0.4.34(ws@8.20.0)':
+  '@modular-prompt/experiment@0.4.34(ws@8.21.0)':
     dependencies:
       '@modular-prompt/core': 0.3.0
-      '@modular-prompt/driver': 0.13.1(ws@8.20.0)(zod@3.25.76)
-      '@modular-prompt/process': 0.5.2(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/driver': 0.13.1(ws@8.21.0)(zod@3.25.76)
+      '@modular-prompt/process': 0.5.2(ws@8.21.0)(zod@3.25.76)
       '@modular-prompt/utils': 0.3.5
       commander: 12.1.0
       jiti: 2.6.1
@@ -2077,10 +2077,10 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@modular-prompt/process@0.5.2(ws@8.20.0)(zod@3.25.76)':
+  '@modular-prompt/process@0.5.2(ws@8.21.0)(zod@3.25.76)':
     dependencies:
       '@modular-prompt/core': 0.3.0
-      '@modular-prompt/driver': 0.13.1(ws@8.20.0)(zod@3.25.76)
+      '@modular-prompt/driver': 0.13.1(ws@8.21.0)(zod@3.25.76)
       '@modular-prompt/utils': 0.3.5
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
@@ -2985,9 +2985,9 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
-  openai@5.23.2(ws@8.20.0)(zod@3.25.76):
+  openai@5.23.2(ws@8.21.0)(zod@3.25.76):
     optionalDependencies:
-      ws: 8.20.0
+      ws: 8.21.0
       zod: 3.25.76
 
   optionator@0.9.4:
@@ -3088,7 +3088,7 @@ snapshots:
       retry: 0.12.0
       signal-exit: 3.0.7
 
-  protobufjs@7.6.1:
+  protobufjs@7.6.2:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -3363,7 +3363,7 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.20.0: {}
+  ws@8.21.0: {}
 
   yaml@2.8.2: {}
 

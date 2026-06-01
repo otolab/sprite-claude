@@ -126,8 +126,11 @@ export async function runWorkflow<T>(
         throw error;
       }
     }
-    const stats = getCacheStats(resolved.driver);
-    if (stats) logger.logCacheStats?.(phase, stats);
+    // disableCache時はキャッシュ自体が無効なので統計も記録しない
+    if (!options.disableCache) {
+      const stats = getCacheStats(resolved.driver);
+      if (stats) logger.logCacheStats?.(phase, stats);
+    }
     return result;
   }
 
@@ -153,8 +156,10 @@ export async function runWorkflow<T>(
         throw error;
       }
     }
-    const allStats = getAllCacheStats(driverSet);
-    if (Object.keys(allStats).length > 0) logger.logCacheStats?.(phase, allStats);
+    if (!options.disableCache) {
+      const allStats = getAllCacheStats(driverSet);
+      if (Object.keys(allStats).length > 0) logger.logCacheStats?.(phase, allStats);
+    }
     return result;
   }
 

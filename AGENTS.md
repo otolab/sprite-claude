@@ -66,6 +66,7 @@ sprite-claude/
 │   ├── development/          # 開発者向けドキュメント
 │   │   ├── build-guide.md    # ビルド手順とキャッシュ管理
 │   │   ├── testing-guide.md  # テストツールの使い方
+│   │   ├── log-analysis.md   # ログ分析手順とKVキャッシュ観察
 │   │   ├── prompt-engineering.md # プロンプト・エンジニアリング
 │   │   ├── 2-phase-tool-approach.md # 2フェーズアプローチ設計
 │   │   └── anthropic-server-testing.md # ユニットテスト・統合テスト
@@ -117,6 +118,7 @@ sprite-claude/
 ### 開発者向け (`docs/development/`)
 - **[build-guide.md](docs/development/build-guide.md)** - ビルド手順とキャッシュ管理
 - **[testing-guide.md](docs/development/testing-guide.md)** - テストツールの使い方
+- **[log-analysis.md](docs/development/log-analysis.md)** - ログ分析手順とKVキャッシュ観察
 - **[prompt-engineering.md](docs/development/prompt-engineering.md)** - プロンプト・エンジニアリング（軽量・高速な検証サイクル）
 - **[2-phase-tool-approach.md](docs/development/2-phase-tool-approach.md)** - 2フェーズアプローチ設計
 - **[anthropic-server-testing.md](docs/development/anthropic-server-testing.md)** - ユニットテスト・統合テスト
@@ -124,6 +126,7 @@ sprite-claude/
 ### アーキテクチャ (`docs/architecture/`)
 - **[layers.md](docs/architecture/layers.md)** - 層の責任分担（プロセス管理層とサーバーロジック層）
 - **[logging.md](docs/architecture/logging.md)** - ログシステムとextract-log.ts
+- **[kv-cache.md](docs/architecture/kv-cache.md)** - MLX KVキャッシュの仕組み
 - **[agentic-workflow.md](docs/architecture/agentic-workflow.md)** - Agenticワークフローモードの概要と外部インターフェース
 - **[agentic-process-flow.md](docs/architecture/agentic-process-flow.md)** - agenticProcessの内部処理フロー（@modular-prompt/process 0.3.4）
 

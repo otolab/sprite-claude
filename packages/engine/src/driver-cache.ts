@@ -86,7 +86,9 @@ export async function resolveDriver(
 
 /**
  * Extract cache stats from a driver's cacheController (if present).
- * Works with MlxDriver which has a private cacheController with getStats().
+ * cacheControllerはdriverOptions.cacheDirが指定された場合のみ作成される。
+ * 未指定のドライバではundefinedを返す。
+ * @see docs/architecture/kv-cache.md
  */
 export function getCacheStats(driver: AIDriver): CacheStats | undefined {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

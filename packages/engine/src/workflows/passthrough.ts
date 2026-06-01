@@ -45,6 +45,7 @@ export async function passthroughWorkflow(
       temperature: 0.7,
       tools: toolDefs,
       toolChoice: toolDefs ? 'auto' : undefined,
+      ...(options.disableCache ? { cache: false } : {}),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
