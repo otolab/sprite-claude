@@ -1,7 +1,6 @@
 """KV cache management for sprite-claude."""
 
 import json
-import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -86,7 +85,13 @@ class CacheManager:
     def show(self) -> dict[str, Any]:
         """キャッシュ状態のサマリーを返す。"""
         if not self.cache_dir.exists():
-            return {"cache_dir": str(self.cache_dir), "entries": [], "total_size": 0}
+            return {
+                "cache_dir": str(self.cache_dir),
+                "entry_count": 0,
+                "total_size_mb": 0.0,
+                "total_size_gb": 0.0,
+                "entries": [],
+            }
 
         index = self.load_index()
         entries_info = []
@@ -125,7 +130,7 @@ class CacheManager:
         3. 残りを新しい順にソートし、max_size_gb を超える分を古い順に削除
         """
         if not self.cache_dir.exists():
-            return {"deleted": [], "kept": 0, "freed_mb": 0}
+            return {"deleted": [], "kept": 0, "freed_mb": 0, "dry_run": dry_run}
 
         index = self.load_index()
         now = datetime.now(timezone.utc)

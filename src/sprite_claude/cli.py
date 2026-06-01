@@ -287,7 +287,10 @@ def cmd_cache_clean(args):
             dry_run=args.dry_run,
         )
 
-        if result['dry_run']:
+        dry_run = result['dry_run']
+        action = "WOULD RM" if dry_run else "DELETE"
+
+        if dry_run:
             print("[dry-run] No files will be deleted.\n")
 
         if not result['deleted']:
@@ -296,12 +299,11 @@ def cmd_cache_clean(args):
 
         print(f"{'Action':<10} {'Key':<16} {'Model':<40} {'Size':>8} {'Reason'}")
         print("-" * 100)
-        action = "DELETE" if not result['dry_run'] else "WOULD RM"
         for d in result['deleted']:
             print(f"{action:<10} {d['key']:<16} {d['model']:<40} {d['size_mb']:>6.1f}MB {d['reason']}")
 
         print()
-        if result['dry_run']:
+        if dry_run:
             print(f"Would delete {len(result['deleted'])} entries")
         else:
             print(f"Deleted {len(result['deleted'])} entries, freed {result['freed_mb']} MB")
