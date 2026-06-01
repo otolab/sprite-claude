@@ -85,3 +85,106 @@ agentic ワークフローで `includeThinking: true` の場合、assistant の 
 ## ツール
 
 `extract-log` コマンドで上記のドリルダウンを行える。`extract-log --help` を参照。
+
+## KV キャッシュの観察
+
+### cache_stats ログエントリ
+
+ワークフロー完了時に `cache_stats` タイプのログエントリが記録される。
+
+**出力コード**:
+- passthrough: `packages/engine/src/workflows/runner.ts` L129-130  
+  `getCacheStats(resolved.driver)` で単一ドライバの統計
+- agentic: 同 L156-157  
+  `getAllCacheStats(driverSet)` で DriverSet 全体の統計
+
+**注**: `cacheController` を持たないドライバでは出力されない（`getCacheStats` が `undefined` を返す）。
+
+### CacheStats のフィールド
+
+| フィールド | 意味 |
+|-----------|------|
+| `totalQueries` | クエリ総数 |
+| `incremental` | incremental プリフィル回数（キャッシュ再利用） |
+| `fresh` | フルプリフィル回数（キャッシュなし） |
+| `totalPromptTokens` | 処理したプロンプトトークン総数 |
+| `prefillReusedTokens` | キャッシュから再利用したトークン数 |
+| `cacheGrowthTokens` | 新たにキャッシュに追加したトークン数 |
+
+### 観察方法
+
+cache_stats は `extract-log.sh` の標準出力には表示されない（show サブコマンドのエントリ一覧には `cache_stats` タイプとして見える）。
+
+**ログファイルを直接検索**:
+
+```bash
+# 全ログから cache_stats エントリを抽出
+python3 -c "
+import json
+from pathlib import Path
+log_dir = Path.home() / '.sprite-claude' / 'logs' / 'requests'
+for f in sorted(log_dir.glob('*.jsonl')):
+    for line in f.read_text().splitlines():
+        entry = json.loads(line)
+        if entry.get('type') == 'cache_stats':
+            print(f'{f.name}: {json.dumps(entry.get(\"data\",{}))}')
+"
+```
+
+**特定セッションの cache_stats**:
+
+```bash
+# PID 69949 のセッション
+grep -h '"type":"cache_stats"' ~/.sprite-claude/logs/requests/*69949*.jsonl | \
+  python3 -c "import sys, json; [print(f'seq={json.loads(l)[\"seqId\"]}: {json.dumps(json.loads(l)[\"data\"])}') for l in sys.stdin]"
+```
+
+### 読み方の例
+
+あるセッションでのキャッシュ推移:
+
+| seq | totalQueries | incremental | fresh | prefillReusedTokens | 解釈 |
+|-----|--------------|-------------|-------|---------------------|------|
+| 0001 | 1 | 0 | 1 | 0 | 初回、フルプリフィル |
+| 0002 | 3 | 0 | 1 | 0 | まだキャッシュ再利用なし |
+| 0003 | 3 | 1 | 1 | 19,024 | キャッシュ再利用開始 |
+| 0006 | 6 | 4 | 1 | 76,326 | fresh=1 のまま、incremental が積み上がる |
+| 0007 | 7 | 5 | 1 | 95,516 | 正常にキャッシュ機能中 |
+
+**指標**:
+- `fresh` が増えない = キャッシュが有効に機能
+- `incremental` が増える = 差分プリフィルで効率的
+- `prefillReusedTokens / totalPromptTokens` = キャッシュ再利用率
+
+### cache_stats が出力されない場合
+
+- ドライバに `cacheController` がない（例: LFM2.5-8B モデルでは出力されなかった実績あり）
+- ワークフローが正常完了しなかった（エラーやタイムアウトで中断）
+- cache_stats が出力されないこと自体が、そのモデルでキャッシュが機能していない重要な手がかり
+
+### KV キャッシュファイルの直接確認
+
+```bash
+# cache-index.json の確認
+cat ~/.sprite-claude/cache/cache-index.json | python3 -m json.tool
+
+# ファイルとインデックスの整合性確認
+ls ~/.sprite-claude/cache/*.safetensors | wc -l  # 実ファイル数
+# index の entries 数と一致すべき
+
+# ディスク使用量
+du -sh ~/.sprite-claude/cache/
+```
+
+### LLM 応答ログからの間接的な観察
+
+cache_stats が出ない場合でも、L4 の `logEntries` から MLX ドライバのパフォーマンスログで間接的に推測できる:
+
+- `setup 1ms` → キャッシュヒット（プリフィル不要）
+- `setup 数秒〜十数秒` → キャッシュミスまたは部分ヒット（プリフィル実行）
+- `TTFT` → 最初のトークンまでの時間。キャッシュヒット時は短い
+
+```bash
+# extract-log で L4 のログエントリを確認
+./scripts/extract-log.sh show --seq N --raw 'L4.data.logEntries'
+```

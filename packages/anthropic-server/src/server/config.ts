@@ -121,7 +121,8 @@ export function loadConfig(configPath: string): ServerConfig {
 
     validateConfig(config as unknown as Record<string, unknown>);
 
-    // Expand tilde in model driverOptions paths
+    // cacheDirが指定されたモデルのみKVキャッシュが有効化される
+    // @see docs/architecture/kv-cache.md
     if (config.models) {
       for (const model of config.models) {
         if (model.driverOptions?.cacheDir) {

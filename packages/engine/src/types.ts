@@ -41,6 +41,8 @@ export interface WorkflowOptions {
   modelName?: string;
   /** ワークフロー全体のタイムアウト（ミリ秒） */
   workflowTimeout?: number;
+  /** KVキャッシュを無効化（routing等の単発リクエスト用）。QueryOptions.cache: falseとしてドライバに伝搬 */
+  disableCache?: boolean;
 }
 
 import type { QueryResult } from '@modular-prompt/driver';
