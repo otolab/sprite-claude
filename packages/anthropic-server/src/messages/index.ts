@@ -332,10 +332,10 @@ export async function handleMessages(
       }],
     };
 
-    // routingは単発リクエスト — KVキャッシュ無効化（cache: false がドライバに伝搬される）
+    // routingは単発リクエスト — 既存キャッシュは再利用するが新規エントリは作らない
     const result = await runWorkflow(wfDef, aiService, module, {}, [], engineLogger,
       { mode: wfDef.mode, workflowName: wfName, maxTokens: maxTokensConfig,
-        workflowTimeout, disableCache: true });
+        workflowTimeout, cache: 'read-only' });
 
     content = [{
       type: 'text',

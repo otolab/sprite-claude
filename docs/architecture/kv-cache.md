@@ -140,29 +140,41 @@ release(ref) {
 
 ## routing ワークフローとの関係
 
-routing リクエストでは KV キャッシュが無効化されます。
+routing リクエストでは KV キャッシュを read-only モードで使用します。
+既存のキャッシュがあれば再利用しますが、routing 用の新規キャッシュエントリは作成しません。
+
+### QueryOptions.cache の値 (@modular-prompt/driver 0.13.4+)
+
+| 値 | 動作 |
+|----|------|
+| `true` / 未指定 | キャッシュ読み書き（デフォルト） |
+| `'read-only'` | 既存キャッシュを再利用するが新規エントリは作成しない |
+| `false` | キャッシュを完全に無効化 |
 
 ### sprite-claude 側の設定
 
-routing リクエストに `disableCache: true` を設定し、`QueryOptions.cache: false` としてドライバに伝搬:
+routing リクエストに `cache: 'read-only'` を設定し、`QueryOptions.cache` としてドライバに伝搬:
 
 ```typescript
 // messages/index.ts
 const result = await runWorkflow(wfDef, aiService, module, {}, [], engineLogger,
-  { ..., disableCache: true });
-// → passthrough.ts で driver.query(compiled, { ..., cache: false }) に変換
+  { ..., cache: 'read-only' });
+// → passthrough.ts で driver.query(compiled, { ..., cache: 'read-only' }) に変換
 ```
 
-### MlxDriver での実装 (@modular-prompt/driver 0.13.3+)
+### MlxDriver での実装
 
 MlxDriver の `executeQuery()` で `QueryOptions.cache` が尊重される:
 
 ```javascript
 // mlx-driver.js L232
 if (this.cacheController && options?.cache !== false && trustRemoteCode === undefined) {
+    // ...
+    readOnly: options?.cache === 'read-only',  // L244
 ```
 
-`cache: false` が渡された場合、`cacheController` を完全にスキップする。
+- `cache: 'read-only'` — キャッシュ検索は行うが、ミス時に新規エントリを作成しない
+- `cache: false` — `cacheController` を完全にスキップする
 
 ## cache_stats ログ
 
